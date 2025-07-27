@@ -2,8 +2,6 @@ Convert your Scratch 3.0 (`.sb3`) projects into native **Nintendo 3DS** homebrew
 
 > Note: This tool does **not** generate a ready-to-run `.3dsx` file. It creates a DevkitPro-compatible C++ project that you must compile manually using [devkitARM](https://devkitpro.org/).
 
----
-
 ## Features
 
 - **Scratch-like Engine Structure**  
