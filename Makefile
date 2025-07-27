@@ -1,6 +1,14 @@
 #---------------------------------------------------------------------------------
+# Makefile for 3DS projects using devkitARM & devkitPro (https://devkitpro.org)
+# https://github.com/devkitPro/3ds-examples
+#---------------------------------------------------------------------------------
+
+
+#---------------------------------------------------------------------------------
 .SUFFIXES:
 #---------------------------------------------------------------------------------
+
+
 
 ifeq ($(strip $(DEVKITARM)),)
 $(error "Please set DEVKITARM in your environment. export DEVKITARM=<path to>devkitARM")
@@ -31,6 +39,7 @@ include $(DEVKITARM)/3ds_rules
 #     - icon.png
 #     - <libctru folder>/default_icon.png
 #---------------------------------------------------------------------------------
+
 TARGET		:=	$(notdir $(CURDIR))
 BUILD		:=	build
 SOURCES		:=	source
