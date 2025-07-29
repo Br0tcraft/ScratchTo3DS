@@ -213,9 +213,11 @@ def control(blocks, block, data, sprite) -> dict:
                     value = f'std::max(0, std::stoi({value}))'
             else:
                 value = 0
-            data["loopCounter"] += 1
+            
             if "SUBSTACK" in block["inputs"] and type(block["inputs"]["SUBSTACK"]) is list and len(block["inputs"]["SUBSTACK"]) > 1 and type(block["inputs"]["SUBSTACK"][1]) is str and block["inputs"]["SUBSTACK"][1] in blocks:
+                data["loopCounter"] += 1
                 newCode = convert_stack(block["inputs"]["SUBSTACK"][1], blocks, sprite, data)
+                data["loopCounter"] -= 1
                 if not newCode["success"]:
                     return newCode
             else:
@@ -229,7 +231,7 @@ def control(blocks, block, data, sprite) -> dict:
             step.append(f'\t\t\t\tctx.loopCounters[{data["loopCounter"]}]--;\n\t\t\t\tctx.step -= {count};\n\t\t\t\treturn {data["functionName"]};\n')
             result.append(f'\t\t\t\tif (ctx.loopCounters[{data["loopCounter"]}] == 0)\n\t\t\t\t{{\n\t\t\t\t\tctx.loopCounters.pop_back();\n\t\t\t\t\tctx.step += {count + 1};\n\t\t\t\treturn 0;\n\n\t\t\t\t}}\n')
             result += step
-            data["loopCounter"] -= 1
+           
         
         case "control_if":
             if "CONDITION" in block["inputs"]:
