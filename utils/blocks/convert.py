@@ -3,19 +3,19 @@
 def convert_start(next, blocks, sprite) -> dict:
     return {"success": False, "msg": "Not loaded yet"}
 
-def generate_function(hats: dict, blocks: dict, sprite: dict) -> dict:
+def generate_function(hats: dict, blocks: dict, sprite: dict, SECURE: bool, isStage) -> dict:
     '''{"success": True, "def": definitions, "func": ""}'''
     definitions = ""
     function = ""
     
     for key, block_ids  in hats.items():
         i = 1
-        data = {"functionName": "", "loopCounter": 0}
+        data = {"functionName": "", "loopCounter": 0, "vars": sprite["variables"], "secure": SECURE, "isStage": isStage}
         for block in block_ids:
-            data["functionName"] = f"thread_{key}_{str(i)}(ctx)"
+            data["functionName"] = f"thread_{key}_{str(i)}(ctx, pubVars)"
             definitions += f"\t\tExecutionContext step_{key}_{str(i)};\n"
             result = convert_start(blocks[block]["next"], blocks, sprite, data)
-            function += f'\tint thread_{key}_{str(i)}(ExecutionContext& ctx)\n'
+            function += f'\tint thread_{key}_{str(i)}(ExecutionContext& ctx, std::unordered_map<std::string, std::string> &pubVars)\n'
             function += '\t{\n'
             if not result["success"]:
                 return result
@@ -73,110 +73,106 @@ def convert_start(nextId, blocks, sprite, data) -> dict:
     return {"success": True, "func": script}
 
 
-def get_value(blocks, cont, need: int, posOrNegativ = "negativ"):
+def get_value(blocks: dict, cont, variables: list, complexeScanForInt = True) -> str:
     '''1: String; 2: Bool; 3: Number; 4 Int
         {"success": True, "content": result}'''
-    print("KONVERT BLOCK")
-    print(cont)
-    print("TYPE")
-    print(cont[0])
-    result = calc_value(blocks, cont)
-    if not result["success"]:
-        return result
-    value = result["values"]
-    result = ""
-    print("OUPT")
-    print(value["calc"])
-    print(value["calc"] is not None or value["calc"] is None)
-    if value["calc"] is not None or value["calc"] is None:
-        print(type(cont[0]))
-        if need == 1:
-            result = f'"{str(value["calc"])}"'
-        elif need == 2:
-            print("BOOL")
-            if str(value["calc"]) <= "0":
-                 result = "false"
-            else:
-                result = "true"
-        elif need == 3:
-            try:
-                result = str(float(str(value["calc"])))
-            except:
-                result = "0"
-            if posOrNegativ == "positiv":
-                if float(result) < 0:
-                    result = "0"
-        elif need == 4:
-            try:
-                print(f"##{value['calc']}##")
-                result = str(int(float(str(value['calc']))))
-            except:
-                result = "0"
-            if posOrNegativ == "positiv":
-                if int(result) < 0:
-                    result = "0"
-    return {"success": True, "content": result}
-    #
-def calc_value(blocks, cont) -> dict:
-    values = {}
-    print("CONTENT")
-    print(cont)
+
+    #content exist is correct
     if type(cont) is not list:
-        return error("Wrong input type in one of the Blocks")
+        return "0"
+    if len(cont) < 2:
+        return "0"
+    
+    #Detect Type
     if type(cont[1]) is list:
         if len(cont[1]) > 2:
-            print("IS VARIABLE")
-            #it is a variable
-            values = {"type": "variable", "value": str(cont[1][1]), "calc": None}
+            #than it is a Variable Block
+            #is it private ior public var
+            if cont[1][1] in variables:
+                #it is private
+                return f'vars["{str(cont[1][1])}"]'
+            else:
+                #probalby public var (or it does not exist)
+                return f'puVars["{str(cont[1][1])}"]'
+        elif len(cont[1]) > 1:
+            return f'"{cont[1][1]}"'
         else:
-            print("IS STRING OR NUMBER")
-            values = {"type": "input", "value": str(cont[1][1]), "calc": str(cont[1][1])}
-    if type(cont[1]) is str:
+            return "0"#error -> replacing with 0 (false; string: "0"; or number 0)
+    elif type(cont[1]) is str:
+        #it is a nested Block
         if cont[1] not in blocks:
-            return error("Missing or wrong block id found")
-        print("IS NESTED BLOCK")
-        result = iterate_values(blocks, blocks[cont[1]])
-        if not result["success"]:
-            return result
-        print(result["values"])
-        values = result["values"]
-    return {"success": True, "values": values}
-#1 bei text
-#2 bei bool
-#3 bei Zahl
-def iterate_values(blocks, block):
-    print("NESTED:")
-    if type(block) is not dict or "opcode" not in block or "inputs" not in block or "fields" not in block or "topLevel" not in block:
-        return error("Missing Blockdata")
-    if type(block["opcode"]) is not str or type(block["inputs"]) is not dict or type(block["fields"]) is not dict or type(block["topLevel"]) is not bool or block["topLevel"] == True:   
-        return error("Wrong Blockdata")
-    match block["opcode"]:
+            #something wrong with the Blocks
+            return "0"
+        if complexeScanForInt:
+            return "SaveCalc.int(" + get_nested_block(blocks, blocks[cont[1]], variables, ) + ")"
+        return get_nested_block(blocks, blocks[cont[1]], variables, complexeScanForInt)
+        
+
+def get_nested_block(blocks: dict, cont, variables: list, complexeScanForInt = True) -> str:
+    if "opcode" not in cont:
+        return "0"
+    match cont["opcode"]:
         case "operator_add":
-            print("ADD BLOCK")
-            part1 = {"type": "input", "value": "0", "calc": "0"}
-            if "NUM1" in block["inputs"]:
-                print("NUM1")
-                part1 = calc_value(blocks, block["inputs"]["NUM1"])
-                print(part1["values"])
-                if not part1["success"]:
-                    return part1
-                part1 = part1["values"]
-                if part1["calc"] is not None and not part1["calc"].replace(".", "").isdigit()or str(part1["calc"]).count(".") > 1:
-                    part1["calc"] = "0"
+            if "inputs" not in cont:
+                return "0"
+            value1 = ""
+            if "NUM1" in cont["inputs"]:
+                value1 = get_value(blocks, cont["inputs"]["NUM1"], variables, complexeScanForInt)
+            value2 = ""
+            if "NUM2" in cont["inputs"]:
+                value2 = get_value(blocks, cont["inputs"]["NUM2"], variables, complexeScanForInt)
 
-            part2 = {"type": "input", "value": "0", "calc": "0"}
-            if "NUM2" in block["inputs"]:
-                part2 = calc_value(blocks, block["inputs"]["NUM2"])
-                if not part2["success"]:
-                    return part2
-                part2 = part2["values"]
-                if part2["calc"] is not None and not part2["calc"].replace(".", "").isdigit() or str(part2["calc"]).count(".") > 1:
-                    part2["calc"] = "0"
-
-            result = None
-            if part1["calc"] is not None and part2["calc"] is not None:
-                result = str(float(part1["calc"]) + float(part2["calc"]))
-            return {"success": True, "values": {"type": "add", "1": part1, "2": part2, "calc": result}}
+            if complexeScanForInt:
+                return f'SaveCalc.add(str({value1}), str({value2}))'
+            return f'({float(value1)} + {float(value2)})'
+        case "operator_subtract":
+            if "inputs" not in cont:
+                return "0"
+            value1 = ""
+            if "NUM1" in cont["inputs"]:
+                value1 = get_value(blocks, cont["inputs"]["NUM1"], variables, complexeScanForInt)
+            value2 = ""
+            if "NUM2" in cont["inputs"]:
+                value2 = get_value(blocks, cont["inputs"]["NUM2"], variables, complexeScanForInt)
+            if complexeScanForInt:
+                return f'SaveCalc.sub(str({value1}), str({value2}))'
+            return f'({float(value1)} - {float(value2)})'
+        case "operator_multiply":
+            if "inputs" not in cont:
+                return "0"
+            value1 = ""
+            if "NUM1" in cont["inputs"]:
+                value1 = get_value(blocks, cont["inputs"]["NUM1"], variables, complexeScanForInt)
+            value2 = ""
+            if "NUM2" in cont["inputs"]:
+                value2 = get_value(blocks, cont["inputs"]["NUM2"], variables, complexeScanForInt)
+            if complexeScanForInt:
+                return f'SaveCalc.mul(str({value1}), str({value2}))'
+            return f'({float(value1)} * {float(value2)})'
+        case "operator_divide":
+            if "inputs" not in cont:
+                return "0"
+            value1 = ""
+            if "NUM1" in cont["inputs"]:
+                value1 = get_value(blocks, cont["inputs"]["NUM1"], variables, complexeScanForInt)
+            value2 = ""
+            if "NUM2" in cont["inputs"]:
+                value2 = get_value(blocks, cont["inputs"]["NUM2"], variables, complexeScanForInt)
+            if complexeScanForInt:
+                return f'SaveCalc.div(str({value1}), str({value2}))'
+            return f'({float(value1)} / {float(value2)})'
+        case "operator_mod":
+            if "inputs" not in cont:
+                return "0"
+            value1 = ""
+            if "NUM1" in cont["inputs"]:
+                value1 = get_value(blocks, cont["inputs"]["NUM1"], variables, complexeScanForInt)
+            value2 = ""
+            if "NUM2" in cont["inputs"]:
+                value2 = get_value(blocks, cont["inputs"]["NUM2"], variables, complexeScanForInt)
+            if complexeScanForInt:
+                return f'SaveCalc.mod(str({value1}), str({value2}))'
+            return f'({float(value1)} % {float(value2)})'
             
 
 
@@ -197,22 +193,26 @@ def control(blocks, block, data, sprite) -> dict:
         case "control_wait":
             value = 0
             if "DURATION" in block["inputs"]:
-                value = get_value(blocks, block["inputs"]["DURATION"], 3, "positiv")
-                if not value["success"]:
-                    return value
+                value = get_value(blocks, block["inputs"]["DURATION"], data["vars"], data["secure"])
+                if data["secure"]:
+                    value = f'std::max(0, SaveCalc.int({value}))'
+                else:
+                    value = f'std::max(0, std::stoi({value}))'
             else:
                 value = {"success": True, "content": "0"}
-            result.append(f'\t\t\t\tctx.loopCounters.push_back(osGetTime() + ({value["content"]} * 1000));\n\t\t\t\tctx.step++;\n\t\t\t\treturn {data["functionName"]};\n')
-            result.append(f'\t\t\t\tif (osGetTime() < (u64)ctx.loopCounters[{data["loopCounter"]}]) \n\t\t\t\t{{\n\t\t\t\t\treturn 0;\n\n\t\t\t\t\t}}\n\t\t\t\tctx.loopCounters.pop_back();\n')
+            result.append(f'\t\t\t\tctx.loopCounters.push_back(osGetTime() + ({value} * 1000));\n\t\t\t\tctx.step++;\n\t\t\t\treturn {data["functionName"]};\n')
+            result.append(f'\t\t\t\tif (osGetTime() < (u64)ctx.loopCounters[{data}]) \n\t\t\t\t{{\n\t\t\t\t\treturn 0;\n\n\t\t\t\t\t}}\n\t\t\t\tctx.loopCounters.pop_back();\n')
         
         case "control_repeat":
             value = 0
             if "TIMES" in block["inputs"]:
-                value = get_value(blocks, block["inputs"]["TIMES"], 4, "positiv")
-                if not value["success"]:
-                    return value
+                value = get_value(blocks, block["inputs"]["TIMES"], data["vars"], data["secure"])
+                if data["secure"]:
+                    value = f'std::max(0, SaveCalc.int({value}))'
+                else:
+                    value = f'std::max(0, std::stoi({value}))'
             else:
-                value = {"success": True, "content": "0"}
+                value = 0
             data["loopCounter"] += 1
             if "SUBSTACK" in block["inputs"] and type(block["inputs"]["SUBSTACK"]) is list and len(block["inputs"]["SUBSTACK"]) > 1 and type(block["inputs"]["SUBSTACK"][1]) is str and block["inputs"]["SUBSTACK"][1] in blocks:
                 newCode = convert_stack(block["inputs"]["SUBSTACK"][1], blocks, sprite, data)
@@ -220,7 +220,7 @@ def control(blocks, block, data, sprite) -> dict:
                     return newCode
             else:
                 newCode = {"success": True, "func": ""}
-            result.append(f'\t\t\t\tctx.loopCounters.push_back({value["content"]});\n\t\t\t\tctx.step++;\n\t\t\t\treturn {data["functionName"]};\n')
+            result.append(f'\t\t\t\tctx.loopCounters.push_back({value});\n\t\t\t\tctx.step++;\n\t\t\t\treturn {data["functionName"]};\n')
             step = []
             count = 1
             for el in newCode["func"]:
@@ -229,6 +229,14 @@ def control(blocks, block, data, sprite) -> dict:
             step.append(f'\t\t\t\tctx.loopCounters[{data["loopCounter"]}]--;\n\t\t\t\tctx.step -= {count};\n\t\t\t\treturn {data["functionName"]};\n')
             result.append(f'\t\t\t\tif (ctx.loopCounters[{data["loopCounter"]}] == 0)\n\t\t\t\t{{\n\t\t\t\t\tctx.loopCounters.pop_back();\n\t\t\t\t\tctx.step += {count + 1};\n\t\t\t\treturn 0;\n\n\t\t\t\t}}\n')
             result += step
+            data["loopCounter"] -= 1
+        
+        case "control_if":
+            if "CONDITION" in block["inputs"]:
+                condition = get_value(blocks, block["inputs"]["CONDITION"], 2)
+                if not condition["success"]:
+                    return condition
+
     return {"success": True, "code": result}
 
 
@@ -242,66 +250,78 @@ def motion(blocks, block, data) -> dict:
         case "motion_movesteps":
             value = 0
             if "STEPS" in block["inputs"]:
-                value = get_value(blocks, block["inputs"]["STEPS"], 4)
-                if not value["success"]:
-                    return value
-                result.append(f'\t\t\t\tx += {value["content"]};\n')
+                value = get_value(blocks, block["inputs"]["STEPS"], data["vars"], data["secure"])
+                if data["secure"]:
+                    result.append(f'\t\t\t\tx += SaveCalc.int({value});\n')
+                else:
+                    result.append(f'\t\t\t\tx += std::stoi({value});\n')
             else:
                 result.append("\t\t\t\tx += 0;")
 
         case "motion_turnright":
             value = 0
             if "DEGREES" in block["inputs"]:
-                value = get_value(blocks, block["inputs"]["DEGREES"], 4)
-                if not value["success"]:
-                    return value
-                result.append(f'\t\t\t\tdirection += {value["content"]};\n')
+                value = get_value(blocks, block["inputs"]["DEGREES"], data["vars"], data["secure"])
+                if data["secure"]:
+                    result.append(f'\t\t\t\tdirection += SaveCalc.int({value});\n')
+                else:
+                    result.append(f'\t\t\t\tdirection += std::stoi({value});\n')
             else:
                 result.append("\t\t\t\tdirection += 0;")
 
         case "motion_turnleft":
             value = 0
             if "DEGREES" in block["inputs"]:
-                value = get_value(blocks, block["inputs"]["DEGREES"], 4)
-                if not value["success"]:
-                    return value
-                result.append(f'\t\t\t\tdirection -= {value["content"]};\n')
+                value = get_value(blocks, block["inputs"]["DEGREES"], data["vars"], data["secure"])
+                if data["secure"]:
+                    result.append(f'\t\t\t\tdirection -= SaveCalc.int({value});\n')
+                else:
+                    result.append(f'\t\t\t\tdirection -= std::stoi({value});\n')
             else:
                 result.append("\t\t\t\tdirection -= 0;")
         #EDIT
         case "motion_goto":
             value = 0
             if "TO" in block["inputs"]:
-                value = get_value(blocks, block["inputs"]["TO"], 1)
-                if not value["success"]:
-                    return value
-                result.append(f'\t\t\t\tdirection -= {value["content"]};\n')
+                value = get_value(blocks, block["inputs"]["TO"], data["vars"], data["secure"])
+                if data["secure"]:
+                    result.append(f'\t\t\t\tdirection -= SaveCalc.int({value});\n')
+                else:
+                    result.append(f'\t\t\t\tdirection -= std::stoi({value});\n')
+            else:
+                result.append(f'\t\t\t\tdirection -= 0;\n')
 
         case "motion_gotoxy":
             value = 0
             step = ""
             if "X" in block["inputs"]:
-                value = get_value(blocks, block["inputs"]["X"], 4)
-                if not value["success"]:
-                    return value
-                step += f'\t\t\t\tx = {value["content"]};\n'
+                value = get_value(blocks, block["inputs"]["X"], data["vars"], data["secure"])
+                if data["secure"]:
+                    step += f'\t\t\t\tx = SaveCalc.int({value});\n'
+                else:
+                    step += f'\t\t\t\tx = std::stoi({value});\n'
             else:
-                step += "\t\t\t\tx = 0;"
+                step += "\t\t\t\tx = 0;\n"
             if "Y" in block["inputs"]:
-                value = get_value(blocks, block["inputs"]["Y"], 4)
-                if not value["success"]:
-                    return value
-                step += f'\t\t\t\ty = {value["content"]};\n'
+                value = get_value(blocks, block["inputs"]["Y"], data["vars"], data["secure"])
+                if data["secure"]:
+                    step += f'\t\t\t\ty = SaveCalc.int({value});\n'
+                else:
+                    step += f'\t\t\t\ty = std::stoi({value});\n'
             else:
                 step += "\t\t\t\ty = 0;"
+            result.append(step)
         #Edit
         case "motion_glideto":
             value = 0
             if "TO" in block["inputs"]:
-                value = get_value(blocks, block["inputs"]["TO"], 1)
-                if not value["success"]:
-                    return value
-                result.append(f'\t\t\t\tdirection -= {value["content"]};\n')
+                value = get_value(blocks, block["inputs"]["TO"], data["vars"], data["secure"])
+                if data["secure"]:
+                    result.append(f'\t\t\t\tdirection -= SaveCalc.int({value});\n')
+                else:
+                    result.append(f'\t\t\t\tdirection -= std::stoi({value});\n')
+            else:
+                result.append(f'\t\t\t\tdirection -= 0;\n')
 
         case "motion_glidesecstoxy":
             value = 0
@@ -309,26 +329,29 @@ def motion(blocks, block, data) -> dict:
             Yvalue = 0
             step = ""
             if "X" in block["inputs"]:
-                Xvalue = get_value(blocks, block["inputs"]["X"], 4)
-                if not Xvalue["success"]:
-                    return Xvalue
-                Xvalue = Xvalue["content"]
+                Xvalue = get_value(blocks, block["inputs"]["X"], data["vars"], data["secure"])
+                if data["secure"]:
+                    Xvalue = f'SaveCalc.int({Xvalue})'
+                else:
+                    Xvalue = f'int({Xvalue})'
             else:
                 Xvalue = "0"
             
             if "Y" in block["inputs"]:
-                Yvalue = get_value(blocks, block["inputs"]["Y"], 4)
-                if not Yvalue["success"]:
-                    return Yvalue
-                Yvalue = Yvalue["content"]
+                Yvalue = get_value(blocks, block["inputs"]["Y"], data["vars"], data["secure"])
+                if data["secure"]:
+                    Yvalue = f'SaveCalc.int({Yvalue})'
+                else:
+                    Yvalue = f'int({Yvalue})'
             else:
                 Yvalue = "0"
             
             if "SECS" in block["inputs"]:
-                value = get_value(blocks, block["inputs"]["SECS"], 4, "positiv")
-                if not value["success"]:
-                    return 
-                value = value["content"]
+                value = get_value(blocks, block["inputs"]["SECS"], data["vars"], data["secure"])
+                if data["secure"]:
+                    value = f'std::max(0, SaveCalc.int({value}))'
+                else:
+                    value = f'std::max(0, std::stoi({value}))'
             else:
                 value = "0"
             step += f'\t\t\t\tctx.loopCounters.push_back(osGetTime() + {value} * 1000);\n'
@@ -346,60 +369,60 @@ def motion(blocks, block, data) -> dict:
         case "motion_pointindirection":
             value = 0
             if "DIRECTION" in block["inputs"]:
-                value = get_value(blocks, block["inputs"]["DIRECTION"], 4)
-                if not value["success"]:
-                    return value
-                result.append(f'\t\t\t\tdirection = {value["content"]};\n')
+                value = get_value(blocks, block["inputs"]["DIRECTION"], data["vars"], data["secure"])
+                if data["secure"]: 
+                    result.append(f'\t\t\t\tdirection = SaveCalc.int({value});\n')
+                else:
+                    result.append(f'\t\t\t\tdirection = std::stoi({value});\n')
             else:
                 result.append("\t\t\t\tdirection = 0;")
         #edit
         case "motion_pointtowards":
             value = 0
             if "TOWARDS" in block["inputs"]:
-                value = get_value(blocks, block["inputs"]["TOWARDS"], 1)
-                if not value["success"]:
-                    return value
-                result.append(f'\t\t\t\tdirection = {value["content"]};\n')
+                value = get_value(blocks, block["inputs"]["TOWARDS"], data["vars"], data["secure"])
+                result.append(f'\t\t\t\tdirection = {value};\n')
             else:
                 result.append("\t\t\t\tdirection = 0;")
         
         case "motion_changexby":
             value = 0
             if "DX" in block["inputs"]:
-                value = get_value(blocks, block["inputs"]["DX"], 4)
-                if not value["success"]:
-                    return value
-                result.append(f'\t\t\t\tx += {value["content"]};\n')
+                value = get_value(blocks, block["inputs"]["DX"], data["vars"], data["secure"])
+                if data["secure"]:
+                    result.append(f'\t\t\t\tx += SaveCalc.int({value});\n')
+                else:
+                    result.append(f'\t\t\t\tx += std::stoi({value});\n')
             else:
                 result.append("\t\t\t\tx += 0;")
-        
         case "motion_changeyby":
             value = 0
             if "DY" in block["inputs"]:
-                value = get_value(blocks, block["inputs"]["DY"], 4)
-                if not value["success"]:
-                    return value
-                result.append(f'\t\t\t\ty += {value["content"]};\n')
-            else:
-                result.append("\t\t\t\ty += 0;")
+                value = get_value(blocks, block["inputs"]["DY"], data["vars"], data["secure"])
+                if data["secure"]:
+                    result.append(f'\t\t\t\ty += SaveCalc.int({value});\n')
+                else:
+                    result.append(f'\t\t\t\ty += std::stoi({value});\n')
         
         case "motion_setx":
             value = 0
             if "X" in block["inputs"]:
-                value = get_value(blocks, block["inputs"]["X"], 4)
-                if not value["success"]:
-                    return value
-                result.append(f'\t\t\t\tx = {value["content"]};\n')
+                value = get_value(blocks, block["inputs"]["X"],data["vars"], data["secure"])
+                if data["secure"]:
+                    result.append(f'\t\t\t\tx = SaveCalc.int({value});\n')
+                else:
+                    result.append(f'\t\t\t\tx = std::stoi({value});\n')
             else:
                 result.append("\t\t\t\tx = 0;")
         
         case "motion_sety":
             value = 0
             if "Y" in block["inputs"]:
-                value = get_value(blocks, block["inputs"]["Y"], 4)
-                if not value["success"]:
-                    return value
-                result.append(f'\t\t\t\ty = {value["content"]};\n')
+                value = get_value(blocks, block["inputs"]["Y"], data["vars"], data["secure"])
+                if data["secure"]:
+                    result.append(f'\t\t\t\ty = SaveCalc.int({value});\n')
+                else:
+                    result.append(f'\t\t\t\ty = std::stoi({value});\n')
             else:
                 result.append("\t\t\t\ty = 0;")
         case _:
@@ -426,6 +449,8 @@ def one_block_detection(blocks, block, sprite, data: dict) -> dict:
         case "control":
             result = control(blocks, block, data, sprite)
         case "motion":
+            if data["isStage"]:
+                return error("Motion blocks are not allowed in stage scripts")
             result = motion(blocks, block, data)
             
     

@@ -70,6 +70,17 @@ def check_for_icon():
         print("⚠ No 'icon.png' found. Default icon will be used.")
     return exists
 
+def secure_mode():
+    print("\nEnable secure mode? (Recommended for projects using fallbacks or dynamic variable types)")
+    print("Secure mode adds runtime type checking but may impact performance.")
+    print("[1] Yes")
+    print("[2] No")
+    while True:
+        choice = input("Your choice: ").strip()
+        if choice in {'1', '2'}:
+            return choice == '1'
+        print("Please select a valid option.")
+    return 1
 def confirm_start():
     response = input("\nReady to generate the DevkitPro project? (y/n): ").strip().lower()
     return response == 'y'
@@ -91,14 +102,15 @@ def main():
     description = get_game_description()
     author = get_author()
     icon_exists = check_for_icon()
-
+    secure = secure_mode()
     settings =  {
                 "game": selected_file,
                 "screen": screen_mode,
                 "name": game_name,
                 "description": description,
                 "author": author,
-                "icon": icon_exists
+                "icon": icon_exists,
+                "SECURE": True if secure == 1 else False
                 }
 
 

@@ -20,7 +20,7 @@ def create_thread_calls(hats: dict, blocks: dict, nameForError: str) -> str:
         #call threads  of event_whenflagclicked
         i = 1
         for block in hats["event_whenflagclicked"]:
-            script += f'\t\tif (step_{blocks[block]["opcode"]}_{str(i)}.step >= 0) errormsg += thread_{blocks[block]["opcode"]}_{str(i)}(step_{blocks[block]["opcode"]}_{str(i)});\n'
+            script += f'\t\tif (step_{blocks[block]["opcode"]}_{str(i)}.step >= 0) errormsg += thread_{blocks[block]["opcode"]}_{str(i)}(step_{blocks[block]["opcode"]}_{str(i)}, pubVars);\n'
         i += 1
         
     
@@ -41,7 +41,7 @@ def create_thread_calls(hats: dict, blocks: dict, nameForError: str) -> str:
         #call threads  of event_whenthisspriteclicked
         i = 1
         for block in hats["event_whenthisspriteclicked"]:
-            script += f'\t\t\tif (step_{blocks[block]["opcode"]}_{str(i)}.step >= 0) errormsg += thread_{blocks[block]["opcode"]}_{str(i)}(step_{blocks[block]["opcode"]}_{str(i)});\n'
+            script += f'\t\t\tif (step_{blocks[block]["opcode"]}_{str(i)}.step >= 0) errormsg += thread_{blocks[block]["opcode"]}_{str(i)}(step_{blocks[block]["opcode"]}_{str(i)}, pubVars);\n'
         i += 1
         script += "\n\n"
         
@@ -51,7 +51,7 @@ def create_thread_calls(hats: dict, blocks: dict, nameForError: str) -> str:
         #call threads  of control_start_as_clone
         i = 1
         for block in hats["control_start_as_clone"]:
-            script += f'\t\t\tif (step_{blocks[block]["opcode"]}_{str(i)}.step >= 0) errormsg += thread_{blocks[block]["opcode"]}_{str(i)}(step_{blocks[block]["opcode"]}_{str(i)});\n'
+            script += f'\t\t\tif (step_{blocks[block]["opcode"]}_{str(i)}.step >= 0) errormsg += thread_{blocks[block]["opcode"]}_{str(i)}(step_{blocks[block]["opcode"]}_{str(i)}, pubVars);\n'
         i += 1
         script += "\t\t};\n\n"
     
@@ -71,7 +71,7 @@ def create_thread_calls(hats: dict, blocks: dict, nameForError: str) -> str:
                 return error("Wrong data type in Broadcast in Sprite: " + nameForError)
             #add code
             script += f"\t\t//check if broadcast: '{broadcast}' was send or block is currently active\n"
-            script += f'\t\tif (std::find(events.getBroadcasts().begin(), events.getBroadcasts().end(), "{broadcast}")!=events.getBroadcasts().end() or step_{blocks[block]["opcode"]}_{str(i)}.step > 0) errormsg += thread_{blocks[block]["opcode"]}_{str(i)}(step_{blocks[block]["opcode"]}_{str(i)});\n'
+            script += f'\t\tif (std::find(events.getBroadcasts().begin(), events.getBroadcasts().end(), "{broadcast}")!=events.getBroadcasts().end() or step_{blocks[block]["opcode"]}_{str(i)}.step > 0) errormsg += thread_{blocks[block]["opcode"]}_{str(i)}(step_{blocks[block]["opcode"]}_{str(i)}, pubVars);\n'
         i += 1
     
     script += "\t\treturn errormsg;\n"
@@ -96,7 +96,7 @@ def get_hats(blocks: dict, name:str) -> dict:
     return {"success": True, "hats": hats}
 
 
-def generate_script(sprite) -> dict:
+def generate_script(sprite, settings: dict, isStage = False) -> dict:
     '''{"success": True, "public": public, "private": private}'''
     private = ""
     public = "\n\t\tSprite *parent;\n"
@@ -110,13 +110,15 @@ def generate_script(sprite) -> dict:
         return result
     hats = result["hats"]
 
-    result = generate_function(hats, blocks, sprite)
+    result = generate_function(hats, blocks, sprite, settings["SECURE"], isStage)
     if not result["success"]:
         return result
     public += result["def"]
     private += result["func"]
-    
-    public += "\n\tint run(LayerManager &manager, Events &events) override\n\t{\n"
+    if isStage:
+        public += "\n\tint run(LayerManager &manager, Events &events, std::unordered_map<std::string, std::string> &pubVars)\n\t{\n"
+    else:
+        public += "\n\tint run(LayerManager &manager, Events &events, std::unordered_map<std::string, std::string> &pubVars) override\n\t{\n"
     public += create_thread_calls(hats, blocks, sprite["name"])
     public += "\t}\n\n"
 

@@ -3,7 +3,7 @@ import os
 from utils.blocksToCpp import generate_script
 SUCCESS = {"success": True}
 
-def generate_main(layers:list, costumes: list, screen_mode: int) -> str:
+def generate_main(layers:list, costumes: list, screen_mode: int, stage: dict) -> str:
     main = '//main script\nint main(int argc, char *argv[]) {\n\n\tinitGraphics();\n\tint close = 0;\n\n\t//define Screens\n'
     if screen_mode == 1:
         main += "\tC3D_RenderTarget* topScreen = C2D_CreateScreenTarget(GFX_TOP, GFX_LEFT);\n"
@@ -15,6 +15,7 @@ def generate_main(layers:list, costumes: list, screen_mode: int) -> str:
     for costume in costumes:
         main += f'\tcache.loadImage("{costume}");\n'
     main += "\n"
+    main += "\tBackground stage;\n"
     for layer in layers:
         main += f"\tCLASS_{layer} {layer};\n"
         main += f'\tlayers.addSprite(&{layer});\n'
@@ -92,6 +93,7 @@ def file_snippets(snip: str) -> str:
 #include <vector>
 #include <string>
 #include <utility>
+#include <unordered_map>
 #include <algorithm>
 #include <list>
 #include <cmath>\n\n
@@ -125,8 +127,11 @@ class Sprite {
         std::vector<std::string> costumes; //list of all costumes that one Sprite has
         int currentCostumeIndex = 0; //the current costume that is used by the Sprite
 
+        //variables:
+        std::unordered_map<std::string, std::string> vars;
+
         //Scripts
-        virtual int run(LayerManager &manager, Events &events) {return 0;};
+        virtual int run(LayerManager &manager, Events &events, std::unordered_map<std::string, std::string> &pubVars) {return 0;};
 
         virtual ~Sprite() = default;
 
@@ -176,9 +181,10 @@ void initGraphics() {
 int tick(LayerManager &manager, ImageCache cache, Events &events, int screen)
 {
     auto spritesCopy = manager.getAllSprites();
+    manager.background.draw(cache, screen);
     for (auto sprite : spritesCopy)
     {
-    int result = sprite->run(manager, events);
+    int result = sprite->run(manager, events, manager.background.vars);
     if (result == 1)
     {
         return 1;
@@ -204,8 +210,9 @@ class LayerManager
 {
 private:
     std::vector<Sprite *> layers;
-
+    
 public:
+    Background background;
     const std::vector<Sprite *>& getAllSprites()
     {
         return layers;
@@ -300,6 +307,7 @@ public:
         CostumeCacheEntry entry;
         entry.name = name;
         entry.image = image;
+        entry.sheet = sheet;
 
         auto ait = std::find(removedImages.begin(), removedImages.end(), name);
         if (ait != removedImages.end()) {
@@ -416,7 +424,7 @@ struct ExecutionContext {
 '''
     return ""
  
-def generate_sprite_class(sprite, name, completename, x, y, direction, size, visible, volume):
+def generate_sprite_class(sprite, name, completename, x, y, direction, size, visible, volume, settings: dict) -> dict:
     '''{"success": True, "script": pack}'''
     attributes = f'\t\t\tname = "{completename}";\n'
     if x != 0:
@@ -432,9 +440,10 @@ def generate_sprite_class(sprite, name, completename, x, y, direction, size, vis
     if volume != 100:
         attributes += f'\t\t\tvolume = {int(volume)};\n'
 
-    result = generate_script(sprite)
+    result = generate_script(sprite, settings)
     if not result["success"]:
         return result
+     
 
     #script overide
     pack = f'class CLASS_{name} : public Sprite\n{{\n\tpublic:\n'
@@ -466,15 +475,54 @@ def generate_cpp(temp: str, stage: dict, sprites: dict, layers: list, settings: 
     events = file_snippets("events")
     tick = file_snippets("tick")
     layerManager = file_snippets("layer")
-    mainFunction = generate_main(layers, costumes, settings["screen"])
+    mainFunction = generate_main(layers, costumes, settings["screen"], stage)
 
+    #generate stage
+    background = f'class Background\n{{\n\tpublic:\n\t\tstd::unordered_map<std::string, std::string> vars;\n\t\tstd::string name = "Stage";\n'
+    background += '\t\tstd::vector<std::string> costumes = {'
+    for costume in stage["costumes"]:
+        background += f'"{costume["name"]}", '
+    background = background[:-2]
+    background += '};\n'
+    background += f'\t\tint currentCostumeIndex = {stage["currentCostume"]};\n'
+    background += f'\t\tBackground() = default;\n\n'
+    background += '\t\tvoid draw(ImageCache& cache, int screen) {\n'
+    background += '''//topscreen single
+            int y = 120;
+            int x = 200;
+            if (screen == 1)
+            {
+                //bottomscreen single
+                x = 160;
+            }else if (screen == 2)
+            {
+                //topscreen using both
+                y = 240;
+            }else if (screen == 3)
+            {
+                //bottomscreen using both
+                y = 0;
+                x = 160;
+            }'''
+    background += '\t\t\tC2D_Image image = cache.getImage(costumes[currentCostumeIndex]);\n'
+    background += '\t\t\tif (image.subtex) C2D_DrawImageAtRotated(image, x, y, 0, 0, nullptr, 2, 2);\n\t\t}\n\n'
+    result = generate_script(stage, settings, True)
+    if not result["success"]:
+        return result
+    background += result["public"]
+    #is there any relevant code
+    if result["private"] != "":
+        background += "private:\n"
+        background += result["private"]
+    background += '\n};\n\n'
+    mainSprite += background
 
     #generate every sprite
     script = ""
     for layer in layers:
         
         sprite = sprites[layer]
-        result = generate_sprite_class(sprite, layer, sprite["name"], sprite["x"], sprite["y"], sprite["direction"], sprite["size"], sprite["visible"], sprite["volume"])
+        result = generate_sprite_class(sprite, layer, sprite["name"], sprite["x"], sprite["y"], sprite["direction"], sprite["size"], sprite["visible"], sprite["volume"], settings)
         if not result["success"]:
             return result
         script += result["script"] + "\n\n"
@@ -487,6 +535,3 @@ def generate_cpp(temp: str, stage: dict, sprites: dict, layers: list, settings: 
 
 
     return SUCCESS
-
-if __name__ == "__main__":
-    generate_cpp("temp/test/", {}, {}, [])

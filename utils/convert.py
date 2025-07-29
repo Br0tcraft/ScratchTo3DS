@@ -81,19 +81,6 @@ def sort(data: dict, sortname: str) -> list:
             data.keys(),
             key=lambda k: data[k][sortname]
         )
-
-def get_all_vars(stage: dict) -> dict:
-    variables = stage["variables"]
-    result = {}
-    for var in variables.keys():
-        cont = variables[var]
-        if type(cont) is not list or (len(cont) != 2 and len(cont) != 3) or type(cont[0]) is not str:
-            return error("Wrong data by variables: " + str(var))
-        name = sanitize_string(cont[0])
-        if name in result.keys():
-            return error(f"The Variable: {cont[0]} was converted to {name}, but there already exist a variable with that (converted) name")
-        result[name] = cont[1]
-    return result
         
 
 
@@ -170,8 +157,6 @@ def convert(data: zipfile.ZipFile, settings: dict) -> dict:
     stage = result["stage"]
     sprites = result["sprites"]
     layers = sort(sprites, "layerOrder")
-    #get public variables
-    publicVars = get_all_vars(stage)
 
     #load all costumes and sounds
     result = load_costume(stage, temp, data)
