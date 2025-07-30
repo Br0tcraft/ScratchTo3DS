@@ -123,7 +123,7 @@ def get_nested_block(blocks: dict, cont, variables: list, complexeScanForInt = T
                 value2 = get_value(blocks, cont["inputs"]["NUM2"], variables, complexeScanForInt)
 
             if complexeScanForInt:
-                return f'SaveCalc.add(str({value1}), str({value2}))'
+                return f'SaveCalc.add(std::to_string({value1}), std::to_string({value2}))'
             return f'({float(value1)} + {float(value2)})'
         case "operator_subtract":
             if "inputs" not in cont:
@@ -135,7 +135,7 @@ def get_nested_block(blocks: dict, cont, variables: list, complexeScanForInt = T
             if "NUM2" in cont["inputs"]:
                 value2 = get_value(blocks, cont["inputs"]["NUM2"], variables, complexeScanForInt)
             if complexeScanForInt:
-                return f'SaveCalc.sub(str({value1}), str({value2}))'
+                return f'SaveCalc.sub(std::to_string({value1}), std::to_string({value2}))'
             return f'({float(value1)} - {float(value2)})'
         case "operator_multiply":
             if "inputs" not in cont:
@@ -147,7 +147,7 @@ def get_nested_block(blocks: dict, cont, variables: list, complexeScanForInt = T
             if "NUM2" in cont["inputs"]:
                 value2 = get_value(blocks, cont["inputs"]["NUM2"], variables, complexeScanForInt)
             if complexeScanForInt:
-                return f'SaveCalc.mul(str({value1}), str({value2}))'
+                return f'SaveCalc.mul(std::to_string({value1}), std::to_string({value2}))'
             return f'({float(value1)} * {float(value2)})'
         case "operator_divide":
             if "inputs" not in cont:
@@ -159,7 +159,7 @@ def get_nested_block(blocks: dict, cont, variables: list, complexeScanForInt = T
             if "NUM2" in cont["inputs"]:
                 value2 = get_value(blocks, cont["inputs"]["NUM2"], variables, complexeScanForInt)
             if complexeScanForInt:
-                return f'SaveCalc.div(str({value1}), str({value2}))'
+                return f'SaveCalc.div(std::to_string({value1}), std::to_string({value2}))'
             return f'({float(value1)} / {float(value2)})'
         case "operator_mod":
             if "inputs" not in cont:
@@ -171,9 +171,226 @@ def get_nested_block(blocks: dict, cont, variables: list, complexeScanForInt = T
             if "NUM2" in cont["inputs"]:
                 value2 = get_value(blocks, cont["inputs"]["NUM2"], variables, complexeScanForInt)
             if complexeScanForInt:
-                return f'SaveCalc.mod(str({value1}), str({value2}))'
+                return f'SaveCalc.mod(strstd::to_string({value1}), std::to_string({value2}))'
             return f'({float(value1)} % {float(value2)})'
-            
+        case "operator_random":
+            if "inputs" not in cont:
+                return "0"
+            value1 = ""
+            if "FROM" in cont["inputs"]:
+                value1 = get_value(blocks, cont["inputs"]["FROM"], variables, complexeScanForInt)
+            value2 = ""
+            if "TO" in cont["inputs"]:
+                value2 = get_value(blocks, cont["inputs"]["TO"], variables, complexeScanForInt)
+            return f'SaveCalc.random(std::to_string({value1}), std::to_string({value2}))'
+        case "operator_and":
+            if "inputs" not in cont:
+                return "0"
+            if "OPERAND1" not in cont["inputs"] or "OPERAND2" not in cont["inputs"]:
+                return "0"
+            value1 = get_value(blocks, cont["inputs"]["OPERAND1"], variables, complexeScanForInt)
+            value2 = get_value(blocks, cont["inputs"]["OPERAND2"], variables, complexeScanForInt)
+            return f'SaveCalc.and(std::to_string({value1}), std::to_string({value2}))'
+        case "operator_or":
+            if "inputs" not in cont:
+                return "0"
+            value1 = "0"
+            if "OPRAND1" in cont["inputs"]:
+                value1 = get_value(blocks, cont["inputs"]["OPRAND1"], variables, complexeScanForInt)
+            value2 = "0"
+            if "OPRAND2" in cont["inputs"]:
+                value2 = get_value(blocks, cont["inputs"]["OPRAND2"], variables, complexeScanForInt)
+            return f'SaveCalc.or(std::to_string({value1}), std::to_string({value2}))'
+        case "operator_not":
+            if "inputs" not in cont:
+                return "1"
+            if "OPERAND" not in cont["inputs"]:
+                return "1"
+            value = get_value(blocks, cont["inputs"]["OPERAND"], variables, complexeScanForInt)
+            return f'SaveCalc.not(std::to_string({value}))'
+        case "operator_gt":
+            if "inputs" not in cont:
+                return "0"
+            value1 = "0"
+            if "OPRAND1" in cont["inputs"]:
+                value1 = get_value(blocks, cont["inputs"]["OPRAND1"], variables, complexeScanForInt)
+            value2 = "0"
+            if "OPRAND2" in cont["inputs"]:
+                value2 = get_value(blocks, cont["inputs"]["OPRAND2"], variables, complexeScanForInt)
+            return f'SaveCalc.gt(std::to_string({value1}), std::to_string({value2}))'
+        case "operator_lt":
+            if "inputs" not in cont:
+                return "0"
+            value1 = "0"
+            if "OPRAND1" in cont["inputs"]:
+                value1 = get_value(blocks, cont["inputs"]["OPRAND1"], variables, complexeScanForInt)
+            value2 = "0"
+            if "OPRAND2" in cont["inputs"]:
+                value2 = get_value(blocks, cont["inputs"]["OPRAND2"], variables, complexeScanForInt)
+            return f'SaveCalc.lt(std::to_string({value1}), std::to_string({value2}))'
+        case "operator_equals":
+            if "inputs" not in cont:
+                return "0"
+            value1 = "0"
+            if "OPRAND1" in cont["inputs"]:
+                value1 = get_value(blocks, cont["inputs"]["OPRAND1"], variables, complexeScanForInt)
+            value2 = "0"
+            if "OPRAND2" in cont["inputs"]:
+                value2 = get_value(blocks, cont["inputs"]["OPRAND2"], variables, complexeScanForInt)
+            return f'SaveCalc.equals(std::to_string({value1}), std::to_string({value2}))'
+        case "operator_join":
+            if "inputs" not in cont:
+                return '""'
+            value1 = ""
+            if "STRING1" in cont["inputs"]:
+                value1 = get_value(blocks, cont["inputs"]["STRING1"], variables, complexeScanForInt)
+            value2 = ""
+            if "STRING2" in cont["inputs"]:
+                value2 = get_value(blocks, cont["inputs"]["STRING2"], variables, complexeScanForInt)
+            if complexeScanForInt:
+                return f'SaveCalc.join(std::to_string({value1}), std::to_string({value2}))'
+            return f'(std::to_string({value1}) + std::to_string({value2}))'
+        case "operator_letter_of":
+            if "inputs" not in cont:
+                return '""'
+            value1 = ""
+            if "STRING" in cont["inputs"]:
+                value1 = get_value(blocks, cont["inputs"]["STRING"], variables, complexeScanForInt)
+            value2 = "0"
+            if "LETTER" in cont["inputs"]:
+                value2 = get_value(blocks, cont["inputs"]["LETTER"], variables, complexeScanForInt)
+            return f'SaveCalc.letterOf(std::to_string({value1}), std::to_string({value2}))'
+        case "operator_length":
+            if "inputs" not in cont:
+                return "0"
+            value1 = ""
+            if "STRING" in cont["inputs"]:
+                value1 = get_value(blocks, cont["inputs"]["STRING"], variables, complexeScanForInt)
+            return f'lenghth(std::to_string({value1}))'
+        case "operator_contains":
+            if "inputs" not in cont:
+                return "0"
+            value1 = ""
+            if "STRING1" in cont["inputs"]:
+                value1 = get_value(blocks, cont["inputs"]["STRING1"], variables, complexeScanForInt)
+            value2 = ""
+            if "STRING2" in cont["inputs"]:
+                value2 = get_value(blocks, cont["inputs"]["STRING2"], variables, complexeScanForInt)
+            return f'(std::to_string{value1}).contains(std::to_string({value2}))'
+        case "operator_round":
+            if "inputs" not in cont:
+                return "0"
+            value1 = ""
+            if "NUM" in cont["inputs"]:
+                value1 = get_value(blocks, cont["inputs"]["NUM"], variables, complexeScanForInt)
+            if complexeScanForInt:
+                return f'SaveCalc.round(std::to_string({value1}))'
+            return f'round({float(value1)})'
+        case "operator_mathop":
+            if "fields" not in cont or "OPERATOR" not in cont["fields"]:
+                return "0"
+            if "inputs" not in cont:
+                return "0"
+            match cont["fields"]["OPERATOR"]:
+                case "abs":
+                    value1 = ""
+                    if "NUM" in cont["inputs"]:
+                        value1 = get_value(blocks, cont["inputs"]["NUM"], variables, complexeScanForInt)
+                    if complexeScanForInt:
+                        return f'SaveCalc.abs(std::to_string({value1}))'
+                    return f'abs({float(value1)})'
+                case "floor":
+                    value1 = ""
+                    if "NUM" in cont["inputs"]:
+                        value1 = get_value(blocks, cont["inputs"]["NUM"], variables, complexeScanForInt)
+                    if complexeScanForInt:
+                        return f'SaveCalc.floor(std::to_string({value1}))'
+                    return f'floor({float(value1)})'
+                case "ceiling":
+                    value1 = ""
+                    if "NUM" in cont["inputs"]:
+                        value1 = get_value(blocks, cont["inputs"]["NUM"], variables, complexeScanForInt)
+                    if complexeScanForInt:
+                        return f'SaveCalc.ceiling(std::to_string({value1}))'
+                    return f'ceil({float(value1)})'
+                case "sqrt":
+                    value1 = ""
+                    if "NUM" in cont["inputs"]:
+                        value1 = get_value(blocks, cont["inputs"]["NUM"], variables, complexeScanForInt)
+                    if complexeScanForInt:
+                        return f'SaveCalc.sqrt(std::to_string({value1}))'
+                    return f'sqrt({float(value1)})'
+                case "ln":
+                    value1 = ""
+                    if "NUM" in cont["inputs"]:
+                        value1 = get_value(blocks, cont["inputs"]["NUM"], variables, complexeScanForInt)
+                    if complexeScanForInt:
+                        return f'SaveCalc.ln(std::to_string({value1}))'
+                    return f'log({float(value1)})'
+                case "log":
+                    value1 = ""
+                    if "NUM" in cont["inputs"]:
+                        value1 = get_value(blocks, cont["inputs"]["NUM"], variables, complexeScanForInt)
+                    if complexeScanForInt:
+                        return f'SaveCalc.log(std::to_string({value1}))'
+                    return f'log10({float(value1)})'
+                case "sin":
+                    value1 = ""
+                    if "NUM" in cont["inputs"]:
+                        value1 = get_value(blocks, cont["inputs"]["NUM"], variables, complexeScanForInt)
+                    if complexeScanForInt:
+                        return f'SaveCalc.sin(std::to_string({value1}))'
+                    return f'sin({float(value1)})'
+                case "cos":
+                    value1 = ""
+                    if "NUM" in cont["inputs"]:
+                        value1 = get_value(blocks, cont["inputs"]["NUM"], variables, complexeScanForInt)
+                    if complexeScanForInt:
+                        return f'SaveCalc.cos(std::to_string({value1}))'
+                    return f'cos({float(value1)})'
+                case "tan":
+                    value1 = ""
+                    if "NUM" in cont["inputs"]:
+                        value1 = get_value(blocks, cont["inputs"]["NUM"], variables, complexeScanForInt)
+                    if complexeScanForInt:
+                        return f'SaveCalc.tan(std::to_string({value1}))'
+                    return f'tan({float(value1)})'
+                case "asin":
+                    value1 = ""
+                    if "NUM" in cont["inputs"]:
+                        value1 = get_value(blocks, cont["inputs"]["NUM"], variables, complexeScanForInt)
+                    if complexeScanForInt:
+                        return f'SaveCalc.asin(std::to_string({value1}))'
+                    return f'asin({float(value1)})'
+                case "acos":
+                    value1 = ""
+                    if "NUM" in cont["inputs"]:
+                        value1 = get_value(blocks, cont["inputs"]["NUM"], variables, complexeScanForInt)
+                    if complexeScanForInt:
+                        return f'SaveCalc.acos(std::to_string({value1}))'
+                    return f'acos({float(value1)})'
+                case "atan":
+                    value1 = ""
+                    if "NUM" in cont["inputs"]:
+                        value1 = get_value(blocks, cont["inputs"]["NUM"], variables, complexeScanForInt)
+                    if complexeScanForInt:
+                        return f'SaveCalc.atan(std::to_string({value1}))'
+                    return f'atan({float(value1)})'
+                case "10 ^":
+                    value1 = ""
+                    if "NUM" in cont["inputs"]:
+                        value1 = get_value(blocks, cont["inputs"]["NUM"], variables, complexeScanForInt)
+                    if complexeScanForInt:
+                        return f'SaveCalc.pow10(std::to_string({value1}))'
+                    return f'pow(10, {float(value1)})'
+                case "e ^":
+                    value1 = ""
+                    if "NUM" in cont["inputs"]:
+                        value1 = get_value(blocks, cont["inputs"]["NUM"], variables, complexeScanForInt)
+                    if complexeScanForInt:
+                        return f'SaveCalc.powE(std::to_string({value1}))'
+                    return f'pow(M_E, {float(value1)})'
+
 
 
 
