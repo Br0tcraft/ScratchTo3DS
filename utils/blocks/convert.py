@@ -418,7 +418,7 @@ def control(blocks, block, data, sprite) -> dict:
             else:
                 value = {"success": True, "content": "0"}
             result.append(f'\t\t\t\tctx.loopCounters.push_back(osGetTime() + ({value} * 1000));\n\t\t\t\tctx.step++;\n\t\t\t\treturn {data["functionName"]};\n')
-            result.append(f'\t\t\t\tif (osGetTime() < (u64)ctx.loopCounters[{data}]) \n\t\t\t\t{{\n\t\t\t\t\treturn 0;\n\n\t\t\t\t\t}}\n\t\t\t\tctx.loopCounters.pop_back();\n')
+            result.append(f'\t\t\t\tif (osGetTime() < (u64)ctx.loopCounters[{data["loopCounter"]}]) \n\t\t\t\t{{\n\t\t\t\t\treturn 0;\n\n\t\t\t\t\t}}\n\t\t\t\tctx.loopCounters.pop_back();\n')
         
         case "control_repeat":
             value = 0
