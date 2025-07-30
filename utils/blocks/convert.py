@@ -104,7 +104,7 @@ def get_value(blocks: dict, cont, variables: list, complexeScanForInt = True) ->
             #something wrong with the Blocks
             return "0"
         if complexeScanForInt:
-            return "SaveCalc.int(" + get_nested_block(blocks, blocks[cont[1]], variables, ) + ")"
+            return "SaveCalc::safeStringToInt(" + get_nested_block(blocks, blocks[cont[1]], variables, ) + ")"
         return get_nested_block(blocks, blocks[cont[1]], variables, complexeScanForInt)
         
 
@@ -123,8 +123,8 @@ def get_nested_block(blocks: dict, cont, variables: list, complexeScanForInt = T
                 value2 = get_value(blocks, cont["inputs"]["NUM2"], variables, complexeScanForInt)
 
             if complexeScanForInt:
-                return f'SaveCalc.add(std::to_string({value1}), std::to_string({value2}))'
-            return f'({float(value1)} + {float(value2)})'
+                return f'SaveCalc::add({value1}, {value2})'
+            return f'(std::stoi({value1}) + std::stoi({value2}))'
         case "operator_subtract":
             if "inputs" not in cont:
                 return "0"
@@ -135,8 +135,8 @@ def get_nested_block(blocks: dict, cont, variables: list, complexeScanForInt = T
             if "NUM2" in cont["inputs"]:
                 value2 = get_value(blocks, cont["inputs"]["NUM2"], variables, complexeScanForInt)
             if complexeScanForInt:
-                return f'SaveCalc.sub(std::to_string({value1}), std::to_string({value2}))'
-            return f'({float(value1)} - {float(value2)})'
+                return f'SaveCalc::sub({value1}, {value2})'
+            return f'(std::stoi({value1}) - std::stoi({value2}))'
         case "operator_multiply":
             if "inputs" not in cont:
                 return "0"
@@ -147,8 +147,8 @@ def get_nested_block(blocks: dict, cont, variables: list, complexeScanForInt = T
             if "NUM2" in cont["inputs"]:
                 value2 = get_value(blocks, cont["inputs"]["NUM2"], variables, complexeScanForInt)
             if complexeScanForInt:
-                return f'SaveCalc.mul(std::to_string({value1}), std::to_string({value2}))'
-            return f'({float(value1)} * {float(value2)})'
+                return f'SaveCalc::mul({value1}, {value2})'
+            return f'(std::stoi({value1}) * std::stoi({value2}))'
         case "operator_divide":
             if "inputs" not in cont:
                 return "0"
@@ -159,8 +159,8 @@ def get_nested_block(blocks: dict, cont, variables: list, complexeScanForInt = T
             if "NUM2" in cont["inputs"]:
                 value2 = get_value(blocks, cont["inputs"]["NUM2"], variables, complexeScanForInt)
             if complexeScanForInt:
-                return f'SaveCalc.div(std::to_string({value1}), std::to_string({value2}))'
-            return f'({float(value1)} / {float(value2)})'
+                return f'SaveCalc::div({value1}, {value2})'
+            return f'(std::stoi(({value1}) / std::stoi(({value2}))'
         case "operator_mod":
             if "inputs" not in cont:
                 return "0"
@@ -171,8 +171,8 @@ def get_nested_block(blocks: dict, cont, variables: list, complexeScanForInt = T
             if "NUM2" in cont["inputs"]:
                 value2 = get_value(blocks, cont["inputs"]["NUM2"], variables, complexeScanForInt)
             if complexeScanForInt:
-                return f'SaveCalc.mod(strstd::to_string({value1}), std::to_string({value2}))'
-            return f'({float(value1)} % {float(value2)})'
+                return f'SaveCalc::mod({value1}, {value2})'
+            return f'(std::stoi(({value1}) % std::stoi(({value2}))'
         case "operator_random":
             if "inputs" not in cont:
                 return "0"
@@ -182,7 +182,7 @@ def get_nested_block(blocks: dict, cont, variables: list, complexeScanForInt = T
             value2 = ""
             if "TO" in cont["inputs"]:
                 value2 = get_value(blocks, cont["inputs"]["TO"], variables, complexeScanForInt)
-            return f'SaveCalc.random(std::to_string({value1}), std::to_string({value2}))'
+            return f'SaveCalc::random({value1}, {value2})'
         case "operator_and":
             if "inputs" not in cont:
                 return "0"
@@ -190,7 +190,7 @@ def get_nested_block(blocks: dict, cont, variables: list, complexeScanForInt = T
                 return "0"
             value1 = get_value(blocks, cont["inputs"]["OPERAND1"], variables, complexeScanForInt)
             value2 = get_value(blocks, cont["inputs"]["OPERAND2"], variables, complexeScanForInt)
-            return f'SaveCalc.and(std::to_string({value1}), std::to_string({value2}))'
+            return f'SaveCalc::andOp({value1}, {value2})'
         case "operator_or":
             if "inputs" not in cont:
                 return "0"
@@ -200,14 +200,14 @@ def get_nested_block(blocks: dict, cont, variables: list, complexeScanForInt = T
             value2 = "0"
             if "OPRAND2" in cont["inputs"]:
                 value2 = get_value(blocks, cont["inputs"]["OPRAND2"], variables, complexeScanForInt)
-            return f'SaveCalc.or(std::to_string({value1}), std::to_string({value2}))'
+            return f'SaveCalc::orOp({value1}, {value2})'
         case "operator_not":
             if "inputs" not in cont:
                 return "1"
             if "OPERAND" not in cont["inputs"]:
                 return "1"
             value = get_value(blocks, cont["inputs"]["OPERAND"], variables, complexeScanForInt)
-            return f'SaveCalc.not(std::to_string({value}))'
+            return f'SaveCalc::notOp(std::to_string({value}))'
         case "operator_gt":
             if "inputs" not in cont:
                 return "0"
@@ -217,7 +217,7 @@ def get_nested_block(blocks: dict, cont, variables: list, complexeScanForInt = T
             value2 = "0"
             if "OPRAND2" in cont["inputs"]:
                 value2 = get_value(blocks, cont["inputs"]["OPRAND2"], variables, complexeScanForInt)
-            return f'SaveCalc.gt(std::to_string({value1}), std::to_string({value2}))'
+            return f'SaveCalc::gt({value1}, {value2})'
         case "operator_lt":
             if "inputs" not in cont:
                 return "0"
@@ -227,7 +227,7 @@ def get_nested_block(blocks: dict, cont, variables: list, complexeScanForInt = T
             value2 = "0"
             if "OPRAND2" in cont["inputs"]:
                 value2 = get_value(blocks, cont["inputs"]["OPRAND2"], variables, complexeScanForInt)
-            return f'SaveCalc.lt(std::to_string({value1}), std::to_string({value2}))'
+            return f'SaveCalc::lt({value1}, {value2})'
         case "operator_equals":
             if "inputs" not in cont:
                 return "0"
@@ -237,7 +237,7 @@ def get_nested_block(blocks: dict, cont, variables: list, complexeScanForInt = T
             value2 = "0"
             if "OPRAND2" in cont["inputs"]:
                 value2 = get_value(blocks, cont["inputs"]["OPRAND2"], variables, complexeScanForInt)
-            return f'SaveCalc.equals(std::to_string({value1}), std::to_string({value2}))'
+            return f'SaveCalc::eq({value1}, {value2})'
         case "operator_join":
             if "inputs" not in cont:
                 return '""'
@@ -247,9 +247,7 @@ def get_nested_block(blocks: dict, cont, variables: list, complexeScanForInt = T
             value2 = ""
             if "STRING2" in cont["inputs"]:
                 value2 = get_value(blocks, cont["inputs"]["STRING2"], variables, complexeScanForInt)
-            if complexeScanForInt:
-                return f'SaveCalc.join(std::to_string({value1}), std::to_string({value2}))'
-            return f'(std::to_string({value1}) + std::to_string({value2}))'
+            return f'{value1} + {value2}'
         case "operator_letter_of":
             if "inputs" not in cont:
                 return '""'
@@ -259,14 +257,16 @@ def get_nested_block(blocks: dict, cont, variables: list, complexeScanForInt = T
             value2 = "0"
             if "LETTER" in cont["inputs"]:
                 value2 = get_value(blocks, cont["inputs"]["LETTER"], variables, complexeScanForInt)
-            return f'SaveCalc.letterOf(std::to_string({value1}), std::to_string({value2}))'
+            if complexeScanForInt:
+                return f'SaveCalc::letterOf({value1}, {value2})'
+            return f'std::string(1, {value1}[std::stoi({value2}) - 1])'
         case "operator_length":
             if "inputs" not in cont:
                 return "0"
             value1 = ""
             if "STRING" in cont["inputs"]:
                 value1 = get_value(blocks, cont["inputs"]["STRING"], variables, complexeScanForInt)
-            return f'lenghth(std::to_string({value1}))'
+            return f'lenght({value1})'
         case "operator_contains":
             if "inputs" not in cont:
                 return "0"
@@ -276,7 +276,7 @@ def get_nested_block(blocks: dict, cont, variables: list, complexeScanForInt = T
             value2 = ""
             if "STRING2" in cont["inputs"]:
                 value2 = get_value(blocks, cont["inputs"]["STRING2"], variables, complexeScanForInt)
-            return f'(std::to_string{value1}).contains(std::to_string({value2}))'
+            return f'(std::to_string{value1}).contains({value2})'
         case "operator_round":
             if "inputs" not in cont:
                 return "0"
@@ -284,8 +284,8 @@ def get_nested_block(blocks: dict, cont, variables: list, complexeScanForInt = T
             if "NUM" in cont["inputs"]:
                 value1 = get_value(blocks, cont["inputs"]["NUM"], variables, complexeScanForInt)
             if complexeScanForInt:
-                return f'SaveCalc.round(std::to_string({value1}))'
-            return f'round({float(value1)})'
+                return f'SaveCalc::round({value1})'
+            return f'round(std:stoi({value1}))'
         case "operator_mathop":
             if "fields" not in cont or "OPERATOR" not in cont["fields"]:
                 return "0"
@@ -297,98 +297,98 @@ def get_nested_block(blocks: dict, cont, variables: list, complexeScanForInt = T
                     if "NUM" in cont["inputs"]:
                         value1 = get_value(blocks, cont["inputs"]["NUM"], variables, complexeScanForInt)
                     if complexeScanForInt:
-                        return f'SaveCalc.abs(std::to_string({value1}))'
+                        return f'SaveCalc::abs({value1})'
                     return f'abs({float(value1)})'
                 case "floor":
                     value1 = ""
                     if "NUM" in cont["inputs"]:
                         value1 = get_value(blocks, cont["inputs"]["NUM"], variables, complexeScanForInt)
                     if complexeScanForInt:
-                        return f'SaveCalc.floor(std::to_string({value1}))'
+                        return f'SaveCalc::floor({value1})'
                     return f'floor({float(value1)})'
                 case "ceiling":
                     value1 = ""
                     if "NUM" in cont["inputs"]:
                         value1 = get_value(blocks, cont["inputs"]["NUM"], variables, complexeScanForInt)
                     if complexeScanForInt:
-                        return f'SaveCalc.ceiling(std::to_string({value1}))'
+                        return f'SaveCalc::ceiling({value1})'
                     return f'ceil({float(value1)})'
                 case "sqrt":
                     value1 = ""
                     if "NUM" in cont["inputs"]:
                         value1 = get_value(blocks, cont["inputs"]["NUM"], variables, complexeScanForInt)
                     if complexeScanForInt:
-                        return f'SaveCalc.sqrt(std::to_string({value1}))'
+                        return f'SaveCalc::sqrt({value1})'
                     return f'sqrt({float(value1)})'
                 case "ln":
                     value1 = ""
                     if "NUM" in cont["inputs"]:
                         value1 = get_value(blocks, cont["inputs"]["NUM"], variables, complexeScanForInt)
                     if complexeScanForInt:
-                        return f'SaveCalc.ln(std::to_string({value1}))'
+                        return f'SaveCalc::ln({value1})'
                     return f'log({float(value1)})'
                 case "log":
                     value1 = ""
                     if "NUM" in cont["inputs"]:
                         value1 = get_value(blocks, cont["inputs"]["NUM"], variables, complexeScanForInt)
                     if complexeScanForInt:
-                        return f'SaveCalc.log(std::to_string({value1}))'
+                        return f'SaveCalc::log({value1})'
                     return f'log10({float(value1)})'
                 case "sin":
                     value1 = ""
                     if "NUM" in cont["inputs"]:
                         value1 = get_value(blocks, cont["inputs"]["NUM"], variables, complexeScanForInt)
                     if complexeScanForInt:
-                        return f'SaveCalc.sin(std::to_string({value1}))'
+                        return f'SaveCalc::sin({value1})'
                     return f'sin({float(value1)})'
                 case "cos":
                     value1 = ""
                     if "NUM" in cont["inputs"]:
                         value1 = get_value(blocks, cont["inputs"]["NUM"], variables, complexeScanForInt)
                     if complexeScanForInt:
-                        return f'SaveCalc.cos(std::to_string({value1}))'
+                        return f'SaveCalc::cos({value1})'
                     return f'cos({float(value1)})'
                 case "tan":
                     value1 = ""
                     if "NUM" in cont["inputs"]:
                         value1 = get_value(blocks, cont["inputs"]["NUM"], variables, complexeScanForInt)
                     if complexeScanForInt:
-                        return f'SaveCalc.tan(std::to_string({value1}))'
+                        return f'SaveCalc::tan({value1})'
                     return f'tan({float(value1)})'
                 case "asin":
                     value1 = ""
                     if "NUM" in cont["inputs"]:
                         value1 = get_value(blocks, cont["inputs"]["NUM"], variables, complexeScanForInt)
                     if complexeScanForInt:
-                        return f'SaveCalc.asin(std::to_string({value1}))'
+                        return f'SaveCalc::asin({value1})'
                     return f'asin({float(value1)})'
                 case "acos":
                     value1 = ""
                     if "NUM" in cont["inputs"]:
                         value1 = get_value(blocks, cont["inputs"]["NUM"], variables, complexeScanForInt)
                     if complexeScanForInt:
-                        return f'SaveCalc.acos(std::to_string({value1}))'
+                        return f'SaveCalc::acos({value1})'
                     return f'acos({float(value1)})'
                 case "atan":
                     value1 = ""
                     if "NUM" in cont["inputs"]:
                         value1 = get_value(blocks, cont["inputs"]["NUM"], variables, complexeScanForInt)
                     if complexeScanForInt:
-                        return f'SaveCalc.atan(std::to_string({value1}))'
+                        return f'SaveCalc::atan({value1})'
                     return f'atan({float(value1)})'
                 case "10 ^":
                     value1 = ""
                     if "NUM" in cont["inputs"]:
                         value1 = get_value(blocks, cont["inputs"]["NUM"], variables, complexeScanForInt)
                     if complexeScanForInt:
-                        return f'SaveCalc.pow10(std::to_string({value1}))'
+                        return f'SaveCalc::pow10({value1})'
                     return f'pow(10, {float(value1)})'
                 case "e ^":
                     value1 = ""
                     if "NUM" in cont["inputs"]:
                         value1 = get_value(blocks, cont["inputs"]["NUM"], variables, complexeScanForInt)
                     if complexeScanForInt:
-                        return f'SaveCalc.powE(std::to_string({value1}))'
+                        return f'SaveCalc::powE({value1})'
                     return f'pow(M_E, {float(value1)})'
 
 
@@ -412,7 +412,7 @@ def control(blocks, block, data, sprite) -> dict:
             if "DURATION" in block["inputs"]:
                 value = get_value(blocks, block["inputs"]["DURATION"], data["vars"], data["secure"])
                 if data["secure"]:
-                    value = f'std::max(0, SaveCalc.int({value}))'
+                    value = f'std::max(0, SaveCalc::safeStringToInt({value}))'
                 else:
                     value = f'std::max(0, std::stoi({value}))'
             else:
@@ -425,7 +425,7 @@ def control(blocks, block, data, sprite) -> dict:
             if "TIMES" in block["inputs"]:
                 value = get_value(blocks, block["inputs"]["TIMES"], data["vars"], data["secure"])
                 if data["secure"]:
-                    value = f'std::max(0, SaveCalc.int({value}))'
+                    value = f'std::max(0, SaveCalc::safeStringToInt({value}))'
                 else:
                     value = f'std::max(0, std::stoi({value}))'
             else:
@@ -449,7 +449,21 @@ def control(blocks, block, data, sprite) -> dict:
             result.append(f'\t\t\t\tif (ctx.loopCounters[{data["loopCounter"]}] == 0)\n\t\t\t\t{{\n\t\t\t\t\tctx.loopCounters.pop_back();\n\t\t\t\t\tctx.step += {count + 1};\n\t\t\t\treturn 0;\n\n\t\t\t\t}}\n')
             result += step
            
-        
+        case "control_forever":
+            if "SUBSTACK" in block["inputs"] and type(block["inputs"]["SUBSTACK"]) is list and len(block["inputs"]["SUBSTACK"]) > 1 and type(block["inputs"]["SUBSTACK"][1]) is str and block["inputs"]["SUBSTACK"][1] in blocks:
+                newCode = convert_stack(block["inputs"]["SUBSTACK"][1], blocks, sprite, data)
+                if not newCode["success"]:
+                    return newCode
+            else:
+                newCode = {"success": True, "func": ""}
+            step = []
+            count = 0
+            for el in newCode["func"]:
+                step.append(el)
+                count += 1
+            step.append(f'\t\t\t\tctx.step -= {count};\n\t\t\t\treturn {data["functionName"]};\n')
+            result += step
+
         case "control_if":
             if "CONDITION" in block["inputs"]:
                 condition = get_value(blocks, block["inputs"]["CONDITION"], 2)
@@ -471,7 +485,7 @@ def motion(blocks, block, data) -> dict:
             if "STEPS" in block["inputs"]:
                 value = get_value(blocks, block["inputs"]["STEPS"], data["vars"], data["secure"])
                 if data["secure"]:
-                    result.append(f'\t\t\t\tx += SaveCalc.int({value});\n')
+                    result.append(f'\t\t\t\tx += SaveCalc::safeStringToInt({value});\n')
                 else:
                     result.append(f'\t\t\t\tx += std::stoi({value});\n')
             else:
@@ -482,7 +496,7 @@ def motion(blocks, block, data) -> dict:
             if "DEGREES" in block["inputs"]:
                 value = get_value(blocks, block["inputs"]["DEGREES"], data["vars"], data["secure"])
                 if data["secure"]:
-                    result.append(f'\t\t\t\tdirection += SaveCalc.int({value});\n')
+                    result.append(f'\t\t\t\tdirection += SaveCalc::safeStringToInt({value});\n')
                 else:
                     result.append(f'\t\t\t\tdirection += std::stoi({value});\n')
             else:
@@ -493,7 +507,7 @@ def motion(blocks, block, data) -> dict:
             if "DEGREES" in block["inputs"]:
                 value = get_value(blocks, block["inputs"]["DEGREES"], data["vars"], data["secure"])
                 if data["secure"]:
-                    result.append(f'\t\t\t\tdirection -= SaveCalc.int({value});\n')
+                    result.append(f'\t\t\t\tdirection -= SaveCalc::safeStringToInt({value});\n')
                 else:
                     result.append(f'\t\t\t\tdirection -= std::stoi({value});\n')
             else:
@@ -504,7 +518,7 @@ def motion(blocks, block, data) -> dict:
             if "TO" in block["inputs"]:
                 value = get_value(blocks, block["inputs"]["TO"], data["vars"], data["secure"])
                 if data["secure"]:
-                    result.append(f'\t\t\t\tdirection -= SaveCalc.int({value});\n')
+                    result.append(f'\t\t\t\tdirection -= SaveCalc::safeStringToInt({value});\n')
                 else:
                     result.append(f'\t\t\t\tdirection -= std::stoi({value});\n')
             else:
@@ -516,7 +530,7 @@ def motion(blocks, block, data) -> dict:
             if "X" in block["inputs"]:
                 value = get_value(blocks, block["inputs"]["X"], data["vars"], data["secure"])
                 if data["secure"]:
-                    step += f'\t\t\t\tx = SaveCalc.int({value});\n'
+                    step += f'\t\t\t\tx = SaveCalc::safeStringToInt({value});\n'
                 else:
                     step += f'\t\t\t\tx = std::stoi({value});\n'
             else:
@@ -524,7 +538,7 @@ def motion(blocks, block, data) -> dict:
             if "Y" in block["inputs"]:
                 value = get_value(blocks, block["inputs"]["Y"], data["vars"], data["secure"])
                 if data["secure"]:
-                    step += f'\t\t\t\ty = SaveCalc.int({value});\n'
+                    step += f'\t\t\t\ty = SaveCalc::safeStringToInt({value});\n'
                 else:
                     step += f'\t\t\t\ty = std::stoi({value});\n'
             else:
@@ -536,7 +550,7 @@ def motion(blocks, block, data) -> dict:
             if "TO" in block["inputs"]:
                 value = get_value(blocks, block["inputs"]["TO"], data["vars"], data["secure"])
                 if data["secure"]:
-                    result.append(f'\t\t\t\tdirection -= SaveCalc.int({value});\n')
+                    result.append(f'\t\t\t\tdirection -= SaveCalc::safeStringToInt({value});\n')
                 else:
                     result.append(f'\t\t\t\tdirection -= std::stoi({value});\n')
             else:
@@ -550,25 +564,25 @@ def motion(blocks, block, data) -> dict:
             if "X" in block["inputs"]:
                 Xvalue = get_value(blocks, block["inputs"]["X"], data["vars"], data["secure"])
                 if data["secure"]:
-                    Xvalue = f'SaveCalc.int({Xvalue})'
+                    Xvalue = f'SaveCalc::safeStringToInt({Xvalue})'
                 else:
-                    Xvalue = f'int({Xvalue})'
+                    Xvalue = f'std::stoi({Xvalue})'
             else:
                 Xvalue = "0"
             
             if "Y" in block["inputs"]:
                 Yvalue = get_value(blocks, block["inputs"]["Y"], data["vars"], data["secure"])
                 if data["secure"]:
-                    Yvalue = f'SaveCalc.int({Yvalue})'
+                    Yvalue = f'SaveCalc::safeStringToInt({Yvalue})'
                 else:
-                    Yvalue = f'int({Yvalue})'
+                    Yvalue = f'std::stoi({Yvalue})'
             else:
                 Yvalue = "0"
             
             if "SECS" in block["inputs"]:
                 value = get_value(blocks, block["inputs"]["SECS"], data["vars"], data["secure"])
                 if data["secure"]:
-                    value = f'std::max(0, SaveCalc.int({value}))'
+                    value = f'std::max(0, SaveCalc::safeStringToInt({value}))'
                 else:
                     value = f'std::max(0, std::stoi({value}))'
             else:
@@ -582,7 +596,7 @@ def motion(blocks, block, data) -> dict:
             step += f'\t\t\t\treturn {data["functionName"]};\n'
             result.append(step)
             step = f'\t\t\t\tif (osGetTime() < (u64)ctx.loopCounters[{data["loopCounter"]}])\n\t\t\t\t{{\n\t\t\t\t\tx = ctx.loopCounters[{data["loopCounter"] + 1}] + (ctx.loopCounters[{data["loopCounter"] + 2}] - ctx.loopCounters[{data["loopCounter"] + 1}]) * (1.0f - float((u64)ctx.loopCounters[{data["loopCounter"]}] - osGetTime()) / (1000.0f * {value}));\n\t\t\t\t\ty = ctx.loopCounters[{data["loopCounter"] + 3}] + (ctx.loopCounters[{data["loopCounter"] + 4}] - ctx.loopCounters[{data["loopCounter"] + 3}]) * (1.0f - float((u64)ctx.loopCounters[{data["loopCounter"]}] - osGetTime()) / (1000.0f * {value}));\n\t\t\t\t\treturn 0;\n\n\t\t\t\t}}\n'
-            step += f'\t\t\t\telse\n\t\t\t\t{{\n\t\t\t\t\tx = {Xvalue};\n\t\t\t\t\ty = {Yvalue};\n\t\t\t\t\tctx.loopCounters.pop_back();\n\t\t\t\t\tctx.loopCounters.pop_back();\n\t\t\t\t\tctx.loopCounters.pop_back();\n\t\t\t\t\tctx.loopCounters.pop_back();\n\t\t\t\t\tctx.loopCounters.pop_back();\n\t\t\t\t}}'
+            step += f'\t\t\t\telse\n\t\t\t\t{{\n\t\t\t\t\tx = ctx.loopCounters[{data["loopCounter"] + 2}];\n\t\t\t\t\ty = ctx.loopCounters[{data["loopCounter"] + 4}];\n\t\t\t\t\tctx.loopCounters.pop_back();\n\t\t\t\t\tctx.loopCounters.pop_back();\n\t\t\t\t\tctx.loopCounters.pop_back();\n\t\t\t\t\tctx.loopCounters.pop_back();\n\t\t\t\t\tctx.loopCounters.pop_back();\n\t\t\t\t}}'
             result.append(step)
 
         case "motion_pointindirection":
@@ -590,7 +604,7 @@ def motion(blocks, block, data) -> dict:
             if "DIRECTION" in block["inputs"]:
                 value = get_value(blocks, block["inputs"]["DIRECTION"], data["vars"], data["secure"])
                 if data["secure"]: 
-                    result.append(f'\t\t\t\tdirection = SaveCalc.int({value});\n')
+                    result.append(f'\t\t\t\tdirection = SaveCalc::safeStringToInt({value});\n')
                 else:
                     result.append(f'\t\t\t\tdirection = std::stoi({value});\n')
             else:
@@ -609,7 +623,7 @@ def motion(blocks, block, data) -> dict:
             if "DX" in block["inputs"]:
                 value = get_value(blocks, block["inputs"]["DX"], data["vars"], data["secure"])
                 if data["secure"]:
-                    result.append(f'\t\t\t\tx += SaveCalc.int({value});\n')
+                    result.append(f'\t\t\t\tx += SaveCalc::safeStringToInt({value});\n')
                 else:
                     result.append(f'\t\t\t\tx += std::stoi({value});\n')
             else:
@@ -619,7 +633,7 @@ def motion(blocks, block, data) -> dict:
             if "DY" in block["inputs"]:
                 value = get_value(blocks, block["inputs"]["DY"], data["vars"], data["secure"])
                 if data["secure"]:
-                    result.append(f'\t\t\t\ty += SaveCalc.int({value});\n')
+                    result.append(f'\t\t\t\ty += SaveCalc::safeStringToInt({value});\n')
                 else:
                     result.append(f'\t\t\t\ty += std::stoi({value});\n')
         
@@ -628,7 +642,7 @@ def motion(blocks, block, data) -> dict:
             if "X" in block["inputs"]:
                 value = get_value(blocks, block["inputs"]["X"],data["vars"], data["secure"])
                 if data["secure"]:
-                    result.append(f'\t\t\t\tx = SaveCalc.int({value});\n')
+                    result.append(f'\t\t\t\tx = SaveCalc::safeStringToInt({value});\n')
                 else:
                     result.append(f'\t\t\t\tx = std::stoi({value});\n')
             else:
@@ -639,7 +653,7 @@ def motion(blocks, block, data) -> dict:
             if "Y" in block["inputs"]:
                 value = get_value(blocks, block["inputs"]["Y"], data["vars"], data["secure"])
                 if data["secure"]:
-                    result.append(f'\t\t\t\ty = SaveCalc.int({value});\n')
+                    result.append(f'\t\t\t\ty = SaveCalc::safeStringToInt({value});\n')
                 else:
                     result.append(f'\t\t\t\ty = std::stoi({value});\n')
             else:

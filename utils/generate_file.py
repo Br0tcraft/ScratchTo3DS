@@ -96,7 +96,9 @@ def file_snippets(snip: str) -> str:
 #include <unordered_map>
 #include <algorithm>
 #include <list>
-#include <cmath>\n\n
+#include <cmath>
+#include <random>
+#include <sstream>\n\n
 '''
         case "sprite":
             return '''
@@ -422,8 +424,327 @@ struct ExecutionContext {
     bool finished = false;
 };\n\n
 '''
-    return ""
- 
+        case "SaveCalc":
+            return '''
+namespace SaveCalc {
+    float safeStringToFloat(const std::string& str) {
+        std::istringstream iss(str);
+        float result = 0;
+        iss >> result;
+
+        if (!iss.fail() && iss.eof())
+            return result;
+
+        return 0;
+    }
+
+    int safeStringToInt(const std::string& str) {
+        std::istringstream iss(str);
+        int result = 0;
+        iss >> result;
+
+        if (!iss.fail() && iss.eof())
+            return result;
+
+        return 0;
+    }
+
+    std::string add(const std::string& a, const std::string& b) {
+        float num1 = safeStringToFloat(a);
+        float num2 = safeStringToFloat(b);
+        float sum = num1 + num2;
+        return std::to_string(sum);
+    }
+
+    std::string sub(const std::string& a, const std::string& b) {
+        float num1 = safeStringToFloat(a);
+        float num2 = safeStringToFloat(b);
+        float difference = num1 - num2;
+        return std::to_string(difference);
+    }
+
+    std::string mul(const std::string& a, const std::string& b) {
+        float num1 = safeStringToFloat(a);
+        float num2 = safeStringToFloat(b);
+        float product = num1 * num2;
+        return std::to_string(product);
+    }
+
+    std::string div(const std::string& a, const std::string& b) {
+        float num1 = safeStringToFloat(a);
+        float num2 = safeStringToFloat(b);
+        if (num2 == 0) {
+            return "0"; // Division durch Null
+        }
+        float quotient = num1 / num2;
+        return std::to_string(quotient);
+    }
+
+    std::string mod(const std::string& a, const std::string& b) {
+        float num1 = safeStringToFloat(a);
+        float num2 = safeStringToFloat(b);
+        if (num2 == 0) {
+            return "0"; // Division durch Null
+        }
+        float remainder = fmod(num1, num2);
+        return std::to_string(remainder);
+    }
+
+    bool isInteger(float x) {
+        return std::floor(x) == x;
+    }
+
+    float randomFloat(float x, float y) {
+        static std::random_device rd;
+        static std::mt19937 gen(rd());
+        std::uniform_real_distribution<float> dist(x, y);
+        return dist(gen);
+    }
+
+
+    int randomInt(int x, int y) {
+        static std::random_device rd;
+        static std::mt19937 gen(rd());
+        std::uniform_int_distribution<int> dist(x, y);
+        return dist(gen);
+    }
+
+    std::string random(const std::string& x, const std::string& y) {
+        float num1 = safeStringToFloat(x);
+        float num2 = safeStringToFloat(y);
+
+        if (num1 > num2)
+            std::swap(num1, num2);
+
+        if (isInteger(num1) && isInteger(num2))
+            return std::to_string(randomInt(static_cast<int>(num1), static_cast<int>(num2)));
+
+        return std::to_string(randomFloat(num1, num2));
+    }
+
+    std::string andOp(const std::string& a, const std::string& b) {
+        bool bool1 = a != "0";
+        bool bool2 = b != "0";
+        return bool1 && bool2 ? "1" : "0";
+    }
+
+    std::string orOp(const std::string& a, const std::string& b) {
+        bool bool1 = a != "0";
+        bool bool2 = b != "0";
+        return bool1 || bool2 ? "1" : "0";
+    }
+
+    std::string notOp(const std::string& a) {
+        bool bool1 = a != "0";
+        return !bool1 ? "1" : "0";
+    }
+
+    std::string gt(const std::string& a, const std::string& b) {
+        float num1 = safeStringToFloat(a);
+        float num2 = safeStringToFloat(b);
+        return num1 > num2 ? "1" : "0";
+    }
+
+    std::string lt(const std::string& a, const std::string& b) {
+        float num1 = safeStringToFloat(a);
+        float num2 = safeStringToFloat(b);
+        return num1 < num2 ? "1" : "0";
+    }
+
+    std::string eq(const std::string& a, const std::string& b) {
+        bool result = a.size() == b.size() &&
+            std::equal(a.begin(), a.end(), b.begin(), [](char c1, char c2) {
+                return std::tolower(static_cast<unsigned char>(c1)) == 
+                        std::tolower(static_cast<unsigned char>(c2));
+            });
+        return result ? "1" : "0";
+    }
+
+    std::string letterOf(const std::string& str, int index) {
+        if (index < 1 || index > static_cast<int>(str.size())) {
+            return "0"; // Index außerhalb des Bereichs
+        }
+        return std::string(1, str[index - 1]);
+    }
+
+    std::string lenght(const std::string& str) {
+        return std::to_string(str.size());
+    }
+
+    std::string abs(const std::string& str) {
+        float num = safeStringToFloat(str);
+        return std::to_string(std::abs(num));
+    }
+
+    std::string round(const std::string& str) {
+        float num = safeStringToFloat(str);
+        return std::to_string(std::round(num));
+    }
+
+    std::string floor(const std::string& str) {
+        float num = safeStringToFloat(str);
+        return std::to_string(std::floor(num));
+    }
+
+    std::string ceiling(const std::string& str) {
+        float num = safeStringToFloat(str);
+        return std::to_string(std::ceil(num));
+    }
+
+    std::string sqrt(const std::string& str) {
+        float num = safeStringToFloat(str);
+        if (num < 0) {
+            return "0"; // Quadratwurzel von negativen Zahlen nicht definiert
+        }
+        return std::to_string(std::sqrt(num));
+    }
+
+    std::string ln(const std::string& str) {
+        float num = safeStringToFloat(str);
+        if (num <= 0) {
+            return "0"; // Natürlicher Logarithmus von 0 oder negativen Zahlen nicht definiert
+        }
+        return std::to_string(std::log(num));
+    }
+
+    std::string log(const std::string& str) {
+        float num = safeStringToFloat(str);
+        if (num <= 0) {
+            return "0"; // Logarithmus von 0 oder negativen Zahlen nicht definiert
+        }
+        return std::to_string(std::log10(num));
+    }
+
+    std::string sin(const std::string& str) {
+        float num = safeStringToFloat(str);
+        return std::to_string(std::sin(num * M_PI / 180.0)); // Umwandlung von Grad in Bogenmaß
+    }
+
+    std::string cos(const std::string& str) {
+        float num = safeStringToFloat(str);
+        return std::to_string(std::cos(num * M_PI / 180.0)); // Umwandlung von Grad in Bogenmaß
+    }
+
+    std::string tan(const std::string& str) {
+        float num = safeStringToFloat(str);
+        if (std::cos(num * M_PI / 180.0) == 0) {
+            return "0"; // Tangens von 90° und 270° ist nicht definiert
+        }
+        return std::to_string(std::tan(num * M_PI / 180.0)); // Umwandlung von Grad in Bogenmaß
+    }
+
+    std::string asin(const std::string& str) {
+        float num = safeStringToFloat(str);
+        if (num < -1 || num > 1) {
+            return "0"; // Arkussinus ist nur für Werte zwischen -1 und 1 definiert
+        }
+        return std::to_string(std::asin(num) * 180.0 / M_PI); // Umwandlung von Bogenmaß in Grad
+    }
+
+    std::string acos(const std::string& str) {
+        float num = safeStringToFloat(str);
+        if (num < -1 || num > 1) {
+            return "0"; // Arkuskosinus ist nur für Werte zwischen -1 und 1 definiert
+        }
+        return std::to_string(std::acos(num) * 180.0 / M_PI); // Umwandlung von Bogenmaß in Grad
+    }
+
+    std::string atan(const std::string& str) {
+        float num = safeStringToFloat(str);
+        return std::to_string(std::atan(num) * 180.0 / M_PI); // Umwandlung von Bogenmaß in Grad
+    }
+
+    std::string pow10(const std::string& str) {
+        float num = safeStringToFloat(str);
+        if (num < 0) {
+            return "0"; // Potenzierung mit negativen Exponenten nicht definiert
+        }
+        return std::to_string(std::pow(10, num));
+    }
+
+    std::string powE(const std::string& str) {
+        float num = safeStringToFloat(str);
+        return std::to_string(std::exp(num)); // e^x
+    }
+
+};\n\n
+'''
+        case "unsaveCalc":
+            #only if you know what you are doing
+            return '''
+namespace SaveCalc {
+// is the replcaement for the SaveCalc class but is not doing save calculations this is just for complex calculations
+    float safeStringToFloat(const std::string& str) {
+        std::istringstream iss(str);
+        float result = 0;
+        iss >> result;
+        if (!iss.fail() && iss.eof())
+            return result;
+        return 0;
+    }
+
+    bool isInteger(float x) {
+        return std::floor(x) == x;
+    }
+
+    std::string randomFloat(float x, float y) {
+        static std::random_device rd;
+        static std::mt19937 gen(rd());
+        std::uniform_real_distribution<float> dist(x, y);
+        return std::to_string(dist(gen));
+    }   
+    std::string randomInt(int x, int y) {
+        static std::random_device rd;
+        static std::mt19937 gen(rd());
+        std::uniform_int_distribution<int> dist(x, y);
+        return std::to_string(dist(gen));
+    }
+    std::string random(const std::string& x, const std::string& y) {
+        float num1 = safeStringToFloat(x);
+        float num2 = safeStringToFloat(y);
+        if (num1 > num2)
+            std::swap(num1, num2);
+        if (isInteger(num1) && isInteger(num2))
+            return randomInt(static_cast<int>(num1), static_cast<int>(num2));
+        return randomFloat(num1, num2);
+    }
+
+    std::string andOp(const std::string& a, const std::string& b) {
+        bool bool1 = a != "0";
+        bool bool2 = b != "0";
+        return bool1 && bool2 ? "1" : "0";
+    }
+    std::string orOp(const std::string& a, const std::string& b) {
+        bool bool1 = a != "0";
+        bool bool2 = b != "0";
+        return bool1 || bool2 ? "1" : "0";
+    }
+    std::string notOp(const std::string& a) {
+        bool bool1 = a != "0";
+        return !bool1 ? "1" : "0";
+    }
+    std::string gt(const std::string& a, const std::string& b) {
+        float num1 = safeStringToFloat(a);
+        float num2 = safeStringToFloat(b);
+        return num1 > num2 ? "1" : "0";
+    }
+    std::string lt(const std::string& a, const std::string& b)
+    {
+        float num1 = safeStringToFloat(a);
+        float num2 = safeStringToFloat(b);
+        return num1 < num2 ? "1" : "0";
+    }
+    std::string eq(const std::string& a, const std::string& b) {
+        bool result = a.size() == b.size() &&
+            std::equal(a.begin(), a.end(), b.begin(), [](char c1, char c2) {
+                return std::tolower(static_cast<unsigned char>(c1)) ==
+                        std::tolower(static_cast<unsigned char>(c2));
+            }); 
+        return result ? "1" : "0";
+    }
+};\n\n
+'''
+
 def generate_sprite_class(sprite, name, completename, x, y, direction, size, visible, volume, settings: dict) -> dict:
     '''{"success": True, "script": pack}'''
     attributes = f'\t\t\tname = "{completename}";\n'
@@ -476,7 +797,10 @@ def generate_cpp(temp: str, stage: dict, sprites: dict, layers: list, settings: 
     tick = file_snippets("tick")
     layerManager = file_snippets("layer")
     mainFunction = generate_main(layers, costumes, settings["screen"], stage)
-
+    if settings["SECURE"]:
+        Calc = file_snippets("SaveCalc")
+    else:
+        Calc = file_snippets("unsaveCalc")
     #generate stage
     background = f'class Background\n{{\n\tpublic:\n\t\tstd::unordered_map<std::string, std::string> vars;\n\t\tstd::string name = "Stage";\n'
     background += '\t\tstd::vector<std::string> costumes = {'
@@ -526,7 +850,7 @@ def generate_cpp(temp: str, stage: dict, sprites: dict, layers: list, settings: 
         if not result["success"]:
             return result
         script += result["script"] + "\n\n"
-    cppFile = includes + "\nclass LayerManager;\nclass Sprite;\n" + cache + ExecutionContent + events + mainSprite + script + layerManager + tick + graphics + mainFunction
+    cppFile = includes + "\nclass LayerManager;\nclass Sprite;\n" + Calc +cache + ExecutionContent + events + mainSprite + script + layerManager + tick + graphics + mainFunction
     os.makedirs(temp + "source", exist_ok=True)
     with open(temp + "source/main.cpp", "w") as openFile:
         openFile.write(cppFile)
