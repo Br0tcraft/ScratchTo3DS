@@ -79,9 +79,9 @@ def get_value(blocks: dict, cont, variables: list, complexeScanForInt = True) ->
 
     #content exist is correct
     if type(cont) is not list:
-        return "0"
+        return '"0"'
     if len(cont) < 2:
-        return "0"
+        return '"0"'
     
     #Detect Type
     if type(cont[1]) is list:
@@ -97,12 +97,12 @@ def get_value(blocks: dict, cont, variables: list, complexeScanForInt = True) ->
         elif len(cont[1]) > 1:
             return f'"{cont[1][1]}"'
         else:
-            return "0"#error -> replacing with 0 (false; string: "0"; or number 0)
+            return '"0"'#error -> replacing with 0 (false; string: '"0"'; or number 0)
     elif type(cont[1]) is str:
         #it is a nested Block
         if cont[1] not in blocks:
             #something wrong with the Blocks
-            return "0"
+            return '"0"'
         if complexeScanForInt:
             return "SaveCalc::safeStringToInt(" + get_nested_block(blocks, blocks[cont[1]], variables, ) + ")"
         return get_nested_block(blocks, blocks[cont[1]], variables, complexeScanForInt)
@@ -110,11 +110,11 @@ def get_value(blocks: dict, cont, variables: list, complexeScanForInt = True) ->
 
 def get_nested_block(blocks: dict, cont, variables: list, complexeScanForInt = True) -> str:
     if "opcode" not in cont:
-        return "0"
+        return '"0"'
     match cont["opcode"]:
         case "operator_add":
             if "inputs" not in cont:
-                return "0"
+                return '"0"'
             value1 = ""
             if "NUM1" in cont["inputs"]:
                 value1 = get_value(blocks, cont["inputs"]["NUM1"], variables, complexeScanForInt)
@@ -127,7 +127,7 @@ def get_nested_block(blocks: dict, cont, variables: list, complexeScanForInt = T
             return f'(std::stoi({value1}) + std::stoi({value2}))'
         case "operator_subtract":
             if "inputs" not in cont:
-                return "0"
+                return '"0"'
             value1 = ""
             if "NUM1" in cont["inputs"]:
                 value1 = get_value(blocks, cont["inputs"]["NUM1"], variables, complexeScanForInt)
@@ -139,7 +139,7 @@ def get_nested_block(blocks: dict, cont, variables: list, complexeScanForInt = T
             return f'(std::stoi({value1}) - std::stoi({value2}))'
         case "operator_multiply":
             if "inputs" not in cont:
-                return "0"
+                return '"0"'
             value1 = ""
             if "NUM1" in cont["inputs"]:
                 value1 = get_value(blocks, cont["inputs"]["NUM1"], variables, complexeScanForInt)
@@ -151,7 +151,7 @@ def get_nested_block(blocks: dict, cont, variables: list, complexeScanForInt = T
             return f'(std::stoi({value1}) * std::stoi({value2}))'
         case "operator_divide":
             if "inputs" not in cont:
-                return "0"
+                return '"0"'
             value1 = ""
             if "NUM1" in cont["inputs"]:
                 value1 = get_value(blocks, cont["inputs"]["NUM1"], variables, complexeScanForInt)
@@ -163,7 +163,7 @@ def get_nested_block(blocks: dict, cont, variables: list, complexeScanForInt = T
             return f'(std::stoi(({value1}) / std::stoi(({value2}))'
         case "operator_mod":
             if "inputs" not in cont:
-                return "0"
+                return '"0"'
             value1 = ""
             if "NUM1" in cont["inputs"]:
                 value1 = get_value(blocks, cont["inputs"]["NUM1"], variables, complexeScanForInt)
@@ -175,7 +175,7 @@ def get_nested_block(blocks: dict, cont, variables: list, complexeScanForInt = T
             return f'(std::stoi(({value1}) % std::stoi(({value2}))'
         case "operator_random":
             if "inputs" not in cont:
-                return "0"
+                return '"0"'
             value1 = ""
             if "FROM" in cont["inputs"]:
                 value1 = get_value(blocks, cont["inputs"]["FROM"], variables, complexeScanForInt)
@@ -185,19 +185,19 @@ def get_nested_block(blocks: dict, cont, variables: list, complexeScanForInt = T
             return f'SaveCalc::random({value1}, {value2})'
         case "operator_and":
             if "inputs" not in cont:
-                return "0"
+                return '"0"'
             if "OPERAND1" not in cont["inputs"] or "OPERAND2" not in cont["inputs"]:
-                return "0"
+                return '"0"'
             value1 = get_value(blocks, cont["inputs"]["OPERAND1"], variables, complexeScanForInt)
             value2 = get_value(blocks, cont["inputs"]["OPERAND2"], variables, complexeScanForInt)
             return f'SaveCalc::andOp({value1}, {value2})'
         case "operator_or":
             if "inputs" not in cont:
-                return "0"
-            value1 = "0"
+                return '"0"'
+            value1 = '"0"'
             if "OPRAND1" in cont["inputs"]:
                 value1 = get_value(blocks, cont["inputs"]["OPRAND1"], variables, complexeScanForInt)
-            value2 = "0"
+            value2 = '"0"'
             if "OPRAND2" in cont["inputs"]:
                 value2 = get_value(blocks, cont["inputs"]["OPRAND2"], variables, complexeScanForInt)
             return f'SaveCalc::orOp({value1}, {value2})'
@@ -210,31 +210,31 @@ def get_nested_block(blocks: dict, cont, variables: list, complexeScanForInt = T
             return f'SaveCalc::notOp(std::to_string({value}))'
         case "operator_gt":
             if "inputs" not in cont:
-                return "0"
-            value1 = "0"
+                return '"0"'
+            value1 = '"0"'
             if "OPRAND1" in cont["inputs"]:
                 value1 = get_value(blocks, cont["inputs"]["OPRAND1"], variables, complexeScanForInt)
-            value2 = "0"
+            value2 = '"0"'
             if "OPRAND2" in cont["inputs"]:
                 value2 = get_value(blocks, cont["inputs"]["OPRAND2"], variables, complexeScanForInt)
             return f'SaveCalc::gt({value1}, {value2})'
         case "operator_lt":
             if "inputs" not in cont:
-                return "0"
-            value1 = "0"
+                return '"0"'
+            value1 = '"0"'
             if "OPRAND1" in cont["inputs"]:
                 value1 = get_value(blocks, cont["inputs"]["OPRAND1"], variables, complexeScanForInt)
-            value2 = "0"
+            value2 = '"0"'
             if "OPRAND2" in cont["inputs"]:
                 value2 = get_value(blocks, cont["inputs"]["OPRAND2"], variables, complexeScanForInt)
             return f'SaveCalc::lt({value1}, {value2})'
         case "operator_equals":
             if "inputs" not in cont:
-                return "0"
-            value1 = "0"
+                return '"0"'
+            value1 = '"0"'
             if "OPRAND1" in cont["inputs"]:
                 value1 = get_value(blocks, cont["inputs"]["OPRAND1"], variables, complexeScanForInt)
-            value2 = "0"
+            value2 = '"0"'
             if "OPRAND2" in cont["inputs"]:
                 value2 = get_value(blocks, cont["inputs"]["OPRAND2"], variables, complexeScanForInt)
             return f'SaveCalc::eq({value1}, {value2})'
@@ -254,7 +254,7 @@ def get_nested_block(blocks: dict, cont, variables: list, complexeScanForInt = T
             value1 = ""
             if "STRING" in cont["inputs"]:
                 value1 = get_value(blocks, cont["inputs"]["STRING"], variables, complexeScanForInt)
-            value2 = "0"
+            value2 = '"0"'
             if "LETTER" in cont["inputs"]:
                 value2 = get_value(blocks, cont["inputs"]["LETTER"], variables, complexeScanForInt)
             if complexeScanForInt:
@@ -262,14 +262,14 @@ def get_nested_block(blocks: dict, cont, variables: list, complexeScanForInt = T
             return f'std::string(1, {value1}[std::stoi({value2}) - 1])'
         case "operator_length":
             if "inputs" not in cont:
-                return "0"
+                return '"0"'
             value1 = ""
             if "STRING" in cont["inputs"]:
                 value1 = get_value(blocks, cont["inputs"]["STRING"], variables, complexeScanForInt)
             return f'lenght({value1})'
         case "operator_contains":
             if "inputs" not in cont:
-                return "0"
+                return '"0"'
             value1 = ""
             if "STRING1" in cont["inputs"]:
                 value1 = get_value(blocks, cont["inputs"]["STRING1"], variables, complexeScanForInt)
@@ -279,7 +279,7 @@ def get_nested_block(blocks: dict, cont, variables: list, complexeScanForInt = T
             return f'(std::to_string{value1}).contains({value2})'
         case "operator_round":
             if "inputs" not in cont:
-                return "0"
+                return '"0"'
             value1 = ""
             if "NUM" in cont["inputs"]:
                 value1 = get_value(blocks, cont["inputs"]["NUM"], variables, complexeScanForInt)
@@ -288,9 +288,9 @@ def get_nested_block(blocks: dict, cont, variables: list, complexeScanForInt = T
             return f'round(std:stoi({value1}))'
         case "operator_mathop":
             if "fields" not in cont or "OPERATOR" not in cont["fields"]:
-                return "0"
+                return '"0"'
             if "inputs" not in cont:
-                return "0"
+                return '"0"'
             match cont["fields"]["OPERATOR"]:
                 case "abs":
                     value1 = ""
@@ -390,7 +390,28 @@ def get_nested_block(blocks: dict, cont, variables: list, complexeScanForInt = T
                     if complexeScanForInt:
                         return f'SaveCalc::powE({value1})'
                     return f'pow(M_E, {float(value1)})'
-
+        case "sensing_keypressed":
+            if "inputs" not in cont or "KEY_OPTION" not in cont["inputs"]:
+                return '"0"'
+            if type(cont["inputs"]["KEY_OPTION"]) is not list or len(cont["inputs"]["KEY_OPTION"]) < 2 or type(cont["inputs"]["KEY_OPTION"][1]) is not str:
+                return '"0"'
+            get_option = cont["inputs"]["KEY_OPTION"][1]
+            if get_option not in blocks:
+                return '"0"'
+            if blocks[get_option]["opcode"] == "sensing_keyoptions":
+                cont = blocks[get_option]
+                if "fields" not in cont or "KEY_OPTION" not in cont["fields"]:
+                    print("DOES NOT EXIST: " + "FIELDS" + " or " + "KEY_OPTION")
+                    return '"0"'
+                if type(cont["fields"]["KEY_OPTION"]) is not list or len(cont["fields"]["KEY_OPTION"]) < 2 or type(cont["fields"]["KEY_OPTION"][0]) is not str:
+                    return '"0"'
+                match cont["fields"]["KEY_OPTION"][0]:
+                    case "any":
+                        return f'((kHeld > 0) ? "1" : '"0"')'
+                    case "left arrow":
+                        return f'((keyHeld & KEY_DLEFT) ? "1" : '"0"' )'
+                return "UNKNOWN KEY: " + cont["fields"]["KEY_OPTION"][0]
+    return "UNNKNOWN BLOCK: " + cont["opcode"]
 
 
 
@@ -416,7 +437,7 @@ def control(blocks, block, data, sprite) -> dict:
                 else:
                     value = f'std::max(0, std::stoi({value}))'
             else:
-                value = {"success": True, "content": "0"}
+                value = {"success": True, "content": '0'}
             result.append(f'\t\t\t\tctx.loopCounters.push_back(osGetTime() + ({value} * 1000));\n\t\t\t\tctx.step++;\n\t\t\t\treturn {data["functionName"]};\n')
             result.append(f'\t\t\t\tif (osGetTime() < (u64)ctx.loopCounters[{data["loopCounter"]}]) \n\t\t\t\t{{\n\t\t\t\t\treturn 0;\n\n\t\t\t\t\t}}\n\t\t\t\tctx.loopCounters.pop_back();\n')
         
@@ -467,8 +488,20 @@ def control(blocks, block, data, sprite) -> dict:
         case "control_if":
             if "CONDITION" in block["inputs"]:
                 condition = get_value(blocks, block["inputs"]["CONDITION"], 2)
-                if not condition["success"]:
-                    return condition
+            else:
+                condition = '"0"'
+            if "SUBSTACK" in block["inputs"] and type(block["inputs"]["SUBSTACK"]) is list and len(block["inputs"]["SUBSTACK"]) > 1 and type(block["inputs"]["SUBSTACK"][1]) is str and block["inputs"]["SUBSTACK"][1] in blocks:
+                newCode = convert_stack(block["inputs"]["SUBSTACK"][1], blocks, sprite, data)
+                if not newCode["success"]:
+                    return newCode
+            else:
+                newCode = {"success": True, "func": []}
+            if len(newCode["func"]) != 0:
+                count = len(newCode["func"])
+                result.append(f'\t\t\t\tif ({condition} == "0")\n\t\t\t\t{{\n\t\t\t\t\tctx.step += {count};\n\t\t\t\treturn {data["functionName"]};\n\n\t\t\t\t}}\n')
+                result += newCode["func"]
+
+
 
     return {"success": True, "code": result}
 
@@ -568,7 +601,7 @@ def motion(blocks, block, data) -> dict:
                 else:
                     Xvalue = f'std::stoi({Xvalue})'
             else:
-                Xvalue = "0"
+                Xvalue = '"0"'
             
             if "Y" in block["inputs"]:
                 Yvalue = get_value(blocks, block["inputs"]["Y"], data["vars"], data["secure"])
@@ -577,7 +610,7 @@ def motion(blocks, block, data) -> dict:
                 else:
                     Yvalue = f'std::stoi({Yvalue})'
             else:
-                Yvalue = "0"
+                Yvalue = '"0"'
             
             if "SECS" in block["inputs"]:
                 value = get_value(blocks, block["inputs"]["SECS"], data["vars"], data["secure"])
@@ -586,7 +619,7 @@ def motion(blocks, block, data) -> dict:
                 else:
                     value = f'std::max(0, std::stoi({value}))'
             else:
-                value = "0"
+                value = '"0"'
             step += f'\t\t\t\tctx.loopCounters.push_back(osGetTime() + {value} * 1000);\n'
             step += f'\t\t\t\tctx.loopCounters.push_back(x);\n'
             step += f'\t\t\t\tctx.loopCounters.push_back({Xvalue});\n'
