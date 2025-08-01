@@ -409,7 +409,13 @@ def get_nested_block(blocks: dict, cont, variables: list, complexeScanForInt = T
                     case "any":
                         return f'((kHeld > 0) ? "1" : '"0"')'
                     case "left arrow":
-                        return f'((keyHeld & KEY_DLEFT) ? "1" : '"0"' )'
+                        return f'((kHeld & KEY_DLEFT) ? "1" : '"0"' )'
+                    case "right arrow":
+                        return f'((kHeld & KEY_DRIGHT) ? "1" : '"0"' )'
+                    case "up arrow":
+                        return f'((kHeld & KEY_DUP) ? "1" : '"0"' )'
+                    case "down arrow":
+                        return f'((kHeld & KEY_DDOWN) ? "1" : '"0"' )'
                 return "UNKNOWN KEY: " + cont["fields"]["KEY_OPTION"][0]
     return "UNNKNOWN BLOCK: " + cont["opcode"]
 
